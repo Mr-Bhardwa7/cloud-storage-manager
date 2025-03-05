@@ -19,5 +19,5 @@ FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app ./
 
-EXPOSE 3000
+EXPOSE 3003
 CMD ["npx", "next", "start"]
