@@ -1,6 +1,6 @@
 #!/bin/bash
 
-services=("auth" "oauth" "files" "gateway")
+services=("auth" "cloud_link" "file_nest" "gateway")
 
 echo "Updating dependencies for all services..."
 for service in "${services[@]}"; do

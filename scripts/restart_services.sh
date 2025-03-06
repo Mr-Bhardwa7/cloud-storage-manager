@@ -3,14 +3,14 @@
 # Define services and their dependencies
 declare -A services_with_deps=(
     ["auth"]="nginx gateway"
-    ["oauth"]="nginx gateway"
-    ["files"]="nginx gateway"
+    ["cloudLink"]="nginx gateway"
+    ["fileNest"]="nginx gateway"
     ["gateway"]="nginx"
     ["nginx"]=""
 )
 
 # Extract service names
-services=("auth" "oauth" "files" "gateway" "nginx")
+services=("auth" "cloudLink" "fileNest" "gateway" "nginx")
 
 # Function to restart a service with dependencies
 restart_service() {
@@ -37,8 +37,8 @@ show_usage() {
     echo "🔄 Usage:"
     echo "  ./restart_services.sh                # Restart all services"
     echo "  ./restart_services.sh auth           # Restart only auth service with dependencies"
-    echo "  ./restart_services.sh oauth          # Restart only oauth service with dependencies"
-    echo "  ./restart_services.sh files          # Restart only files service with dependencies"
+    echo "  ./restart_services.sh cloudLink          # Restart only cloudLink service with dependencies"
+    echo "  ./restart_services.sh fileNest          # Restart only fileNest service with dependencies"
     echo "  ./restart_services.sh gateway        # Restart only gateway service with dependencies"
     echo "  ./restart_services.sh nginx          # Restart only nginx service"
 }

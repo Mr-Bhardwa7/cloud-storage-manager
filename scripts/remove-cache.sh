@@ -10,7 +10,7 @@ echo "Stopping running services..."
 docker-compose down
 
 # Remove node_modules and reinstall dependencies for each service
-services=("auth" "oauth" "files" "gateway")
+services=("auth" "cloud_link" "file_nest" "gateway")
 for service in "${services[@]}"; do
     echo "Cleaning and reinstalling dependencies for $service..."
     rm -rf services/$service/node_modules

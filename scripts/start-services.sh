@@ -3,14 +3,14 @@
 # Define services and their dependencies
 declare -A services_with_deps=(
     ["auth"]="nginx gateway"
-    ["oauth"]="nginx gateway"
-    ["files"]="nginx gateway"
+    ["cloudLink"]="nginx gateway"
+    ["fileNest"]="nginx gateway"
     ["gateway"]="nginx"
     ["nginx"]=""
 )
 
 # Extract service names
-services=("auth" "oauth" "files" "gateway" "nginx")
+services=("auth" "cloudLink" "fileNest" "gateway" "nginx")
 
 # Function to start a service with dependencies
 start_service() {
@@ -28,6 +28,8 @@ start_service() {
 
 # Function to start all services
 start_all() {
+    echo "🚀 Removing all services old containers..."
+    docker-compose down
     echo "🚀 Starting all services..."
     docker-compose up --build
 }
@@ -37,8 +39,8 @@ show_usage() {
     echo "🚀 Usage:"
     echo "  ./start_services.sh                # Start all services"
     echo "  ./start_services.sh auth           # Start only auth service with dependencies"
-    echo "  ./start_services.sh oauth          # Start only oauth service with dependencies"
-    echo "  ./start_services.sh files          # Start only files service with dependencies"
+    echo "  ./start_services.sh cloudLink          # Start only cloudLink service with dependencies"
+    echo "  ./start_services.sh fileNest          # Start only fileNest service with dependencies"
     echo "  ./start_services.sh gateway        # Start only gateway service with dependencies"
     echo "  ./start_services.sh nginx          # Start only nginx service"
 }

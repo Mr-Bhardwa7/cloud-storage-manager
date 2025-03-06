@@ -1,6 +1,6 @@
 #!/bin/bash
 
-services=("auth" "oauth" "files")
+services=("auth" "cloud_link" "file_nest")
 
 for service in "${services[@]}"
 do

@@ -10,34 +10,36 @@ services:
       - "3001:3001"
     env_file:
       - ./services/auth/.env
+    volumes:
+      - ./services/auth/.next:/var/www/auth/.next:ro
     depends_on:
       - nginx
     networks:
       - app-network
 
-  oauth:
+  cloudlink:
     build:
       context: .
-      dockerfile: ./docker/oauth.Dockerfile # Updated path
-    container_name: oauth-service
+      dockerfile: ./docker/cloudLink.Dockerfile # Updated path
+    container_name: cloudLink-service
     ports:
       - "3002:3002"
     env_file:
-      - ./services/oauth/.env
+      - ./services/cloud_link/.env
     depends_on:
       - nginx
     networks:
       - app-network
 
-  files:
+  filenest:
     build:
       context: .
-      dockerfile: ./docker/files.Dockerfile # Updated path
-    container_name: files-service
+      dockerfile: ./docker/fileNest.Dockerfile # Updated path
+    container_name: fileNest-service
     ports:
       - "3003:3003"
     env_file:
-      - ./services/files/.env
+      - ./services/file_nest/.env
     depends_on:
       - nginx
     networks:
