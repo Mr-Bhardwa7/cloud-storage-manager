@@ -9,7 +9,7 @@ COPY services/file_nest/package*.json ./
 # COPY services/file_nest/tailwind.config.js ./
 COPY services/file_nest/postcss.config.mjs ./
 COPY services/file_nest/tsconfig.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY services/file_nest/ ./
 

@@ -2,15 +2,19 @@
 
 # Define services and their dependencies
 declare -A services_with_deps=(
-    ["auth"]="nginx gateway"
-    ["cloudLink"]="nginx gateway"
-    ["fileNest"]="nginx gateway"
-    ["gateway"]="nginx"
+    ["auth"]="nginx"
+    ["cloudlink"]="nginx"
+    ["filenest"]="nginx"
     ["nginx"]=""
+    ["auth-db"]=""
+    ["cloudlink-db"]=""
+    ["filenest-db"]=""
+    ["adminer"]=""          # Added Adminer for PostgreSQL
+    ["mongo-express"]=""    # Added Mongo Express for MongoDB
 )
 
 # Extract service names
-services=("auth" "cloudLink" "fileNest" "gateway" "nginx")
+services=("auth" "cloudlink" "filenest" "nginx" "auth-db" "cloudlink-db" "filenest-db" "adminer" "mongo-express")
 
 # Function to restart a service with dependencies
 restart_service() {
@@ -35,22 +39,28 @@ restart_all() {
 # Function to show usage instructions
 show_usage() {
     echo "🔄 Usage:"
-    echo "  ./restart_services.sh                # Restart all services"
-    echo "  ./restart_services.sh auth           # Restart only auth service with dependencies"
-    echo "  ./restart_services.sh cloudLink          # Restart only cloudLink service with dependencies"
-    echo "  ./restart_services.sh fileNest          # Restart only fileNest service with dependencies"
-    echo "  ./restart_services.sh gateway        # Restart only gateway service with dependencies"
-    echo "  ./restart_services.sh nginx          # Restart only nginx service"
+    echo "  ./restart_services.sh                   # Restart all services"
+    echo "  ./restart_services.sh [service]         # Restart a specific service"
+    echo "  ./restart_services.sh --help            # Show this help message"
+    echo ""
+    echo "Available services: ${services[*]}"
 }
 
 # Main script logic
 if [ "$1" ]; then
-    if [[ " ${services[@]} " =~ " $1 " ]]; then
-        restart_service $1
-    else
-        echo "❌ Service '$1' not found. Available services: ${services[*]}"
-        show_usage
-    fi
+    case $1 in
+        --help)
+            show_usage
+            ;;
+        *)
+            if [[ " ${services[@]} " =~ " $1 " ]]; then
+                restart_service $1
+            else
+                echo "❌ Service '$1' not found. Available services: ${services[*]}"
+                show_usage
+            fi
+            ;;
+    esac
 else
     restart_all
 fi

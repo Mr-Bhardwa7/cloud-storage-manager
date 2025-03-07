@@ -8,7 +8,7 @@ COPY services/auth/package*.json ./
 # COPY services/auth/tailwind.config.js ./
 COPY services/auth/postcss.config.mjs ./
 COPY services/auth/tsconfig.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy package.json and package-lock.json from the auth service
 COPY services/auth/ ./

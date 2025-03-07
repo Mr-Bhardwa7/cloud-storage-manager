@@ -11,37 +11,50 @@ services:
     env_file:
       - ./services/auth/.env
     volumes:
-      - ./services/auth/.next:/var/www/auth/.next:ro
+    - ./services/auth:/var/www/auth/
+    - /auth/node_modules
+    - ./services/auth/.next:/var/www/auth/.next:ro
     depends_on:
       - nginx
+      - auth-db
     networks:
       - app-network
 
   cloudlink:
     build:
       context: .
-      dockerfile: ./docker/cloudLink.Dockerfile # Updated path
+      dockerfile: ./docker/cloudLink.Dockerfile
     container_name: cloudLink-service
     ports:
       - "3002:3002"
     env_file:
       - ./services/cloud_link/.env
+    volumes:
+    - ./services/cloud_link:/var/www/cloud_link
+    - /cloud_link/node_modules
+    - ./services/cloud_link/.next:/var/www/cloud_link/.next:ro
     depends_on:
       - nginx
+      - cloudlink-db
     networks:
       - app-network
 
   filenest:
     build:
       context: .
-      dockerfile: ./docker/fileNest.Dockerfile # Updated path
+      dockerfile: ./docker/fileNest.Dockerfile
     container_name: fileNest-service
     ports:
       - "3003:3003"
     env_file:
       - ./services/file_nest/.env
+    volumes:
+    - ./services/file_nest:/var/www/file_nest
+    - /file_nest/node_modules
+    - ./services/file_nest/.next:/var/www/file_nest/.next:ro
     depends_on:
       - nginx
+      - filenest-db
     networks:
       - app-network
 
@@ -60,6 +73,84 @@ services:
       app-network:
         aliases:
           - gateway
+
+  # 🚀 PostgreSQL for Authly
+  auth-db:
+    image: postgres:15-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"  # Ensure this is exposed
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # 🚀 PostgreSQL for CloudLink
+  cloudlink-db:
+    image: postgres:15-alpine
+    container_name: cloudlink-db
+    environment:
+      POSTGRES_USER: cloud_user
+      POSTGRES_PASSWORD: cloud_pass
+      POSTGRES_DB: cloudlink_db
+    ports:
+      - "5433:5432"  # Ensure this is exposed
+    volumes:
+      - cloudlink-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Adminer for PostgreSQL
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8081:8080"  # Ensure this is exposed
+    depends_on:
+      - auth-db
+      - cloudlink-db
+    networks:
+      - app-network
+
+  # 🚀 MongoDB for FileNest
+  filenest-db:
+    image: mongo:6
+    container_name: filenest-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: filenest_user
+      MONGO_INITDB_ROOT_PASSWORD: filenest_pass
+    ports:
+      - "27017:27017"
+    volumes:
+      - filenest-db-data:/data/db
+    networks:
+      - app-network
+
+  # Mongo Express for MongoDB
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: filenest_user
+      ME_CONFIG_MONGODB_ADMINPASSWORD: filenest_pass
+      ME_CONFIG_MONGODB_SERVER: filenest-db
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - "8082:8081"
+    depends_on:
+      - filenest-db
+    networks:
+      - app-network
+
+volumes:
+  auth-db-data:
+  cloudlink-db-data:
+  filenest-db-data:
 
 networks:
   app-network:

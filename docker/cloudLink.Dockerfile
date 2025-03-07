@@ -8,7 +8,7 @@ COPY services/cloud_link/package*.json ./
 # COPY services/cloud_link/tailwind.config.js ./
 COPY services/cloud_link/postcss.config.mjs ./
 COPY services/cloud_link/tsconfig.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY services/cloud_link/ ./
 
