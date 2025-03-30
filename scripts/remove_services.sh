@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define microservices
-services=("auth-service" "cloudLink-service" "fileNest-service" "nginx-proxy" "auth-db" "cloudlink-db" "filenest-db" "adminer" "mongo-express")
+services=("auth-service" "cloudlink-service" "filenest-service" "nginx-proxy" "auth-db" "cloudlink-db" "filenest-db" "adminer" "mongo-express")
 
 show_help() {
     echo "🗑️ Usage:"

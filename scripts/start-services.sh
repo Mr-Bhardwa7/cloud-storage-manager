@@ -13,50 +13,80 @@ declare -A services_with_deps=(
     ["mongo-express"]=""    # Mongo Express for MongoDB
 )
 
-# Extract service names
+# List of all services
 services=("auth" "cloudlink" "filenest" "nginx" "auth-db" "cloudlink-db" "filenest-db" "adminer" "mongo-express")
+
+# List of required Docker images
+declare -A required_images=(
+    ["nginx"]="nginx:latest"
+    ["auth-db"]="postgres:15-alpine"
+    ["cloudlink-db"]="postgres:15-alpine"
+    ["filenest-db"]="mongo:6"
+    ["adminer"]="adminer:latest"
+    ["mongo-express"]="mongo-express:latest"
+)
 
 # Flags
 remove_flag=false
+
+# Function to check and pull missing images
+check_and_pull_images() {
+    echo "🔍 Checking required Docker images..."
+    for service in "${!required_images[@]}"; do
+        image=${required_images[$service]}
+        
+        if [[ "$(docker images -q $image 2>/dev/null)" == "" ]]; then
+            echo "📥 Pulling missing image: $image..."
+            docker pull $image
+        else
+            echo "✅ Image $image already exists. Skipping pull."
+        fi
+    done
+}
 
 # Function to start a service with dependencies
 start_service() {
     local service_name=$1
     local deps=${services_with_deps[$service_name]}
     
+    check_and_pull_images  # Ensure required images are available
+
     if [ -n "$deps" ]; then
         echo "🔄 Starting dependencies for $service_name: $deps..."
-        docker-compose up --pull never -d $deps  # No pull if exists
+        docker-compose up -d --pull never $deps  # No pull if exists
     fi
 
     if $remove_flag; then
-        echo "🚀 Removing old container for $service_name (if exists)..."
+        echo "🗑️ Removing old container for $service_name (if exists)..."
         docker-compose rm -f $service_name
     fi
     
     echo "🚀 Starting $service_name service..."
-    docker-compose up --pull never -d $service_name  # No pull if exists
+    docker-compose up -d --pull never $service_name  # No pull if exists
 }
 
 # Function to start all services
 start_all() {
-    echo "🚀 Starting nginx, databases, and admin tools..."
-    docker-compose up --pull never -d nginx auth-db cloudlink-db filenest-db adminer mongo-express  # No pull if exists
+    echo "🚀 Checking for missing images..."
+    check_and_pull_images  # Ensure required images are available
+
+    echo "🚀 Starting all services..."
+    docker-compose up -d --pull never --build  # Start all services
     
     if $remove_flag; then
-        echo "🚀 Removing old containers for auth, cloudlink, and filenest only..."
+        echo "🗑️ Removing old containers for auth, cloudlink, and filenest only..."
         docker-compose rm -f auth cloudlink filenest
+
+        echo "🚀 Restarting auth, cloudlink, and filenest services..."
+        docker-compose up -d --pull never auth cloudlink filenest --build
     fi
-    
-    echo "🚀 Starting auth, cloudlink, and filenest services..."
-    docker-compose up --pull never -d auth cloudlink filenest  # No pull if exists
 }
 
 # Function to show usage instructions
 show_usage() {
     echo "🚀 Usage:"
-    echo "  ./start_services.sh                   # Start all services without pulling images if they exist"
-    echo "  ./start_services.sh [service]         # Start only a specific service without pulling images if they exist"
+    echo "  ./start_services.sh                   # Start all services, pulling missing images if necessary"
+    echo "  ./start_services.sh [service]         # Start only a specific service, pulling missing images if necessary"
     echo "  ./start_services.sh --remove          # Remove old containers for auth, cloudlink, and filenest before starting"
     echo "  ./start_services.sh --help            # Show this help message"
     echo ""

@@ -66,7 +66,7 @@ Configure the `.env` files inside each microservice (`auth`, `cloud_link`, `file
 
 ### 📜 Shell Scripts Guide
 
-For detailed information about the shell scripts, check out the [Shell Scripts Guide](scripts/README.md).
+For detailed information about the shell scripts, check out the [📜 Shell Scripts Guide](scripts/).
 
 ---
 
@@ -90,8 +90,8 @@ For detailed information about the shell scripts, check out the [Shell Scripts G
 
 ##### For `auth-db`:
 
-- **Username:** `auth_user`
-- **Password:** `auth_pass`
+- **Username:** `authly_user`
+- **Password:** `authly_pass`
 - **Database:** `auth_db`
 
 ###### For `cloudlink-db`:
@@ -114,6 +114,28 @@ For detailed information about the shell scripts, check out the [Shell Scripts G
 - **Database Host:** `filenest-db`
 
 ---
+
+### Prisma
+
+Since you're working with Docker containers, you have two options to run the Prisma commands:
+
+- Inside the auth service container (recommended):
+
+```bash
+docker exec -it auth-service sh
+cd /var/www/auth
+npx prisma db push
+npx prisma generate
+```
+
+- Or from your local machine, but you'll need to temporarily modify the DATABASE_URL:
+
+```bash
+cd c:\Users\t7ean\Downloads\cloud-storage-management\services\auth
+set DATABASE_URL=postgresql://authly_user:authly_pass@localhost:5432/auth_db?schema=public
+npx prisma db push
+npx prisma generate
+```
 
 #### 🔮 Future Plan
 

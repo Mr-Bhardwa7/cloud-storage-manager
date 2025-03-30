@@ -1,0 +1,102 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id         String      @id @default(uuid())
+    email      String      @unique
+    name       String?
+    avatarUrl  String?
+    createdAt  DateTime    @default(now())
+    updatedAt  DateTime    @updatedAt
+    accounts   Account[]
+    sessions   Session[]
+    onboarding Onboarding?
+}
+
+model Account {
+    id             String   @id @default(uuid())
+    userId         String
+    provider       Provider
+    providerUserId String   @unique
+    accessToken    String?
+    refreshToken   String?
+    expiresAt      Int?
+    user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerUserId]) // Ensure uniqueness per provider
+}
+
+enum Provider {
+    GOOGLE
+    GITHUB
+    MAGIC_LINK
+}
+
+model MagicLink {
+    id         String    @id @default(uuid())
+    email      String    @unique
+    token      String    @unique
+    expiresAt  DateTime
+    used       Boolean   @default(false)
+    otp        String? // Stores the generated 6-digit OTP
+    otpExpires DateTime? // Expiry time for OTP
+    createdAt  DateTime  @default(now())
+}
+
+model Session {
+    id        String   @id @default(uuid())
+    userId    String
+    token     String   @unique
+    expiresAt DateTime
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Onboarding {
+    id         String      @id @default(uuid())
+    userId     String      @unique
+    userType   UserType
+    individual Individual?
+    company    Company?
+    completed  Boolean     @default(false)
+    createdAt  DateTime    @default(now())
+    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UserType {
+    INDIVIDUAL
+    COMPANY
+}
+
+model Individual {
+    id           String     @id @default(uuid())
+    onboardingId String     @unique
+    mobile       String?
+    onboarding   Onboarding @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+    id           String       @id @default(uuid())
+    onboardingId String       @unique
+    name         String
+    description  String?
+    email        String
+    mobile       String?
+    teamMembers  TeamMember[]
+    onboarding   Onboarding   @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+}
+
+model TeamMember {
+    id        String  @id @default(uuid())
+    companyId String
+    name      String
+    role      String
+    email     String?
+    company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}

@@ -12,7 +12,6 @@ services:
       - ./services/auth/.env
     volumes:
     - ./services/auth:/var/www/auth/
-    - /auth/node_modules
     - ./services/auth/.next:/var/www/auth/.next:ro
     depends_on:
       - nginx
@@ -24,14 +23,13 @@ services:
     build:
       context: .
       dockerfile: ./docker/cloudLink.Dockerfile
-    container_name: cloudLink-service
+    container_name: cloudlink-service
     ports:
       - "3002:3002"
     env_file:
       - ./services/cloud_link/.env
     volumes:
     - ./services/cloud_link:/var/www/cloud_link
-    - /cloud_link/node_modules
     - ./services/cloud_link/.next:/var/www/cloud_link/.next:ro
     depends_on:
       - nginx
@@ -43,14 +41,13 @@ services:
     build:
       context: .
       dockerfile: ./docker/fileNest.Dockerfile
-    container_name: fileNest-service
+    container_name: filenest-service
     ports:
       - "3003:3003"
     env_file:
       - ./services/file_nest/.env
     volumes:
     - ./services/file_nest:/var/www/file_nest
-    - /file_nest/node_modules
     - ./services/file_nest/.next:/var/www/file_nest/.next:ro
     depends_on:
       - nginx
@@ -79,8 +76,8 @@ services:
     image: postgres:15-alpine
     container_name: auth-db
     environment:
-      POSTGRES_USER: auth_user
-      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_USER: authly_user
+      POSTGRES_PASSWORD: authly_pass
       POSTGRES_DB: auth_db
     ports:
       - "5432:5432"  # Ensure this is exposed

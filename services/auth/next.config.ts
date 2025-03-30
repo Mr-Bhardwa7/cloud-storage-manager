@@ -1,8 +1,6 @@
-
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const nextConfig = {
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
@@ -10,6 +8,14 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
-};
+  reactStrictMode: true,
+  transpilePackages: ["nextuiq"],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: 5 * 1024 * 1024,
+      allowedOrigins: ["*"],
+    },
+  },
+} satisfies NextConfig;
 
 export default nextConfig;
