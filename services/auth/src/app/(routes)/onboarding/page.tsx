@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { MobileHeader } from './components/MobileHeader';
 import { Sidebar } from './components/Sidebar';
 import { AIMessage } from './components/AIMessage';
+import { CLOUDLINK_DASHBOARD } from '@/constants/routes';
 
 type UserType = 'individual' | 'company' | null;
 
@@ -41,7 +42,7 @@ export default function Onboarding() {
 
         setTimeout(() => {
             setShowConfetti(false);
-            router.push('/dashboard');
+            router.replace(CLOUDLINK_DASHBOARD);
         }, 5000);
     };
 

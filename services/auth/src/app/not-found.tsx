@@ -1,4 +1,5 @@
-"use client"; 
+"use client";
+
 import { Button } from "nextuiq";
 import Link from "next/link";
 import { FiArrowLeft } from "react-icons/fi";

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { generateToken, setAuthCookie } from "@/utils/auth";
+import { generateToken } from "@/utils/auth";
 import { prisma } from "@/lib/prisma";
-import { UAParser } from "ua-parser-js";
+import { getDeviceInfo } from "@/utils/device";
+import { headers } from "next/headers";
 
 export async function POST(request: Request) {
     try {
@@ -25,12 +26,13 @@ export async function POST(request: Request) {
             );
         }
 
-        const parser = new UAParser(request.headers.get("user-agent") || "");
-        const device = `${parser.getBrowser().name} on ${parser.getOS().name}`;
+         const headersList = await headers();
+        const device = JSON.stringify(getDeviceInfo(headersList));
         const sessionToken = generateToken({ email, device });
         const sessionData = {
-            token: sessionToken,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            sessionToken: sessionToken,
+            device,
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         };
 
         const user = await prisma.user.findUnique({
@@ -44,8 +46,9 @@ export async function POST(request: Request) {
                         email,
                         accounts: {
                             create: {
-                                provider: "MAGIC_LINK",
-                                providerUserId: email,
+                                provider: "email",
+                                providerAccountId: email,
+                                type: "magic"
                             }
                         },
                         sessions: {
@@ -62,8 +65,6 @@ export async function POST(request: Request) {
                 }
             });
         }
-
-        setAuthCookie(sessionToken);
 
         return NextResponse.json(
             { success: true, message: "OTP verified successfully", token: sessionToken },

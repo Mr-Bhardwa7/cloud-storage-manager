@@ -1,5 +1,5 @@
 generator client {
-    provider = "prisma-client-js"
+    provider      = "prisma-client-js"
     binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -9,34 +9,40 @@ datasource db {
 }
 
 model User {
-    id         String      @id @default(uuid())
-    email      String      @unique
-    name       String?
-    avatarUrl  String?
-    createdAt  DateTime    @default(now())
-    updatedAt  DateTime    @updatedAt
-    accounts   Account[]
-    sessions   Session[]
-    onboarding Onboarding?
+    id            String      @id @default(uuid())
+    name          String?
+    email         String      @unique
+    emailVerified DateTime?
+    image         String?
+    accounts      Account[]
+    sessions      Session[]
+    onboarding    Onboarding?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Account {
-    id             String   @id @default(uuid())
-    userId         String
-    provider       Provider
-    providerUserId String   @unique
-    accessToken    String?
-    refreshToken   String?
-    expiresAt      Int?
-    user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id                String  @id @default(uuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
 
-    @@unique([provider, providerUserId]) // Ensure uniqueness per provider
-}
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-enum Provider {
-    GOOGLE
-    GITHUB
-    MAGIC_LINK
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+    @@index([userId])
 }
 
 model MagicLink {
@@ -47,15 +53,21 @@ model MagicLink {
     used       Boolean   @default(false)
     otp        String? // Stores the generated 6-digit OTP
     otpExpires DateTime? // Expiry time for OTP
-    createdAt  DateTime  @default(now())
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Session {
-    id        String   @id @default(uuid())
-    userId    String
-    token     String   @unique
-    expiresAt DateTime
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id           String   @id @default(uuid())
+    userId       String
+    sessionToken String   @unique
+    expires      DateTime
+    device       String?
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Onboarding {
@@ -65,8 +77,10 @@ model Onboarding {
     individual Individual?
     company    Company?
     completed  Boolean     @default(false)
-    createdAt  DateTime    @default(now())
     user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 enum UserType {
@@ -79,6 +93,9 @@ model Individual {
     onboardingId String     @unique
     mobile       String?
     onboarding   Onboarding @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Company {
@@ -90,6 +107,9 @@ model Company {
     mobile       String?
     teamMembers  TeamMember[]
     onboarding   Onboarding   @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model TeamMember {
@@ -99,4 +119,7 @@ model TeamMember {
     role      String
     email     String?
     company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }

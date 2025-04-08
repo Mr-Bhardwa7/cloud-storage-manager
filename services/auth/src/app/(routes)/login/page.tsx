@@ -3,13 +3,15 @@ import dynamic from "next/dynamic";
 import { NetworkAnimation } from "@/components/network-animation";
 const RenderActionCard = dynamic(() => import('./render-action-card'), { ssr: false });
 import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { CLOUDLINK_DASHBOARD } from "@/constants/routes";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [verificationStep, setVerificationStep] = useState('login'); // ['login', 'verification', 'code']
 
-  const requestOtp = async (email: string): Promise<{ success: boolean; message: string }> => {
+  const requestOtp = async (email: string) => {
     try {
       setLoading(true);
       const res = await fetch("/api/auth/magic/request-link", {
@@ -19,40 +21,49 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Failed to request magic link");
-
       setEmail(email);
       setVerificationStep("verification");
-      return { success: true, message: data.message };
     } catch (error: unknown) {
-      return { success: false, message: error instanceof Error ? error.message : "An unknown error occurred" };
+      console.error("Magic link request failed:", error instanceof Error? error.message : error);
     } finally {
       setLoading(false);
     }
   };
 
-  const onOtpVerification = async (code: string): Promise<void> => {
+  const onOtpVerification = async (otp: string): Promise<void> => {
     try {
       setLoading(true);
-      const res = await fetch("/api/auth/magic/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp: code, email }),
+      // const res = await fetch("/api/auth/magic/verify-otp", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ otp: code, email }),
+      // });
+
+      // const data = await res.json();
+      // if (res.ok) {
+      //   console.log("Login successful!");
+        
+      //   // Check user onboarding status
+      //   const userRes = await fetch("/api/auth/me");
+      //   const userData = await userRes.json();
+        
+      //   const redirectPath = !userData.user?.onboarding?.completed ? "/auth/onboarding" : "/accounts/dashboard";
+      //   setTimeout(() => (window.location.href = redirectPath), 2000);
+      // } else {
+      //   console.log(data.message || "Invalid OTP.");
+      // }
+
+      const res = await signIn("credentials", {
+        email,
+        otp,
+        redirect: true, 
+        callbackUrl: CLOUDLINK_DASHBOARD
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        console.log("Login successful!");
-        
-        // Check user onboarding status
-        const userRes = await fetch("/api/auth/me");
-        const userData = await userRes.json();
-        
-        const redirectPath = !userData.user?.onboarding?.completed ? "/auth/onboarding" : "/accounts/dashboard";
-        setTimeout(() => (window.location.href = redirectPath), 2000);
-      } else {
-        console.log(data.message || "Invalid OTP.");
+      // Optional: handle response manually if redirect is false
+      if (res?.error) {
+        console.error("Login failed:", res.error);
       }
     } catch (error: unknown) {
       console.error("OTP verification failed:", error instanceof Error ? error.message : error);

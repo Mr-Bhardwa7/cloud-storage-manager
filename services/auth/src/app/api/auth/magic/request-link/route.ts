@@ -25,13 +25,13 @@ export async function POST(req: Request) {
 
     await prisma.magicLink.upsert({
       where: { email },
-      update: magicLinkData,
+      update: {...magicLinkData, updatedAt: new Date()},
       create: { email, ...magicLinkData }
     });
 
     await sendMagicLink(
       email, 
-      `${process.env.BASE_URL}/auth/token-verification?token=${token}`
+      `${process.env.BASE_URL}/token-verification?token=${token}`
     );
 
     return NextResponse.json(
