@@ -6,9 +6,12 @@ interface VerificationCardProps {
   handleVerify: () => void;
   loading: boolean;
   disabled: boolean;
+  error?: string | null;
+  mobile: string;
+  onResend: () => void;
 }
 
-const VerificationCard = ({ code, setCode, handleVerify, loading, disabled }: VerificationCardProps) => (
+const VerificationCard = ({ code, setCode, handleVerify, loading, disabled, mobile, onResend }: VerificationCardProps) => (
   <Card className="relative overflow-hidden border border-[oklch(var(--theme-border))] group hover:shadow-lg transition-all duration-300">
     <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] group-hover:opacity-[0.05] transition-opacity" />
     <div className="absolute inset-0 bg-gradient-to-br from-[oklch(var(--theme-primary)/0.02)] via-transparent to-[oklch(var(--theme-secondary)/0.05)] opacity-0 group-hover:opacity-100 transition-all duration-500" />
@@ -18,7 +21,11 @@ const VerificationCard = ({ code, setCode, handleVerify, loading, disabled }: Ve
           We&apos;ve sent a verification code to your phone
         </p>
         <p className="text-[oklch(var(--theme-muted-foreground))]">
-          OTP sent to <span className="font-semibold tracking-wide">80• ••• ••34</span>
+          OTP sent to <span className="font-semibold tracking-wide">
+            {mobile.slice(0, 5)}
+            {'*'.repeat(Math.max(0, mobile.length - 7))}
+            {mobile.slice(-2)}
+          </span>
         </p>
       </div>
       <OTPInput
@@ -38,12 +45,15 @@ const VerificationCard = ({ code, setCode, handleVerify, loading, disabled }: Ve
           Complete Verification
         </Button>
         <Button
-          onClick={() => setCode('')}
+          onClick={() => {
+            setCode('');
+            onResend();
+          }}
           variant="ghost"
           disabled={loading || disabled}
           className="w-full h-12 text-sm border border-[oklch(var(--theme-border))] hover:bg-[oklch(var(--theme-primary)/0.05)] transition-colors"
         >
-          Resend Code
+          <span className="text-[oklch(var(--theme-foreground))]">Resend Code</span>
         </Button>
       </div>
     </div>

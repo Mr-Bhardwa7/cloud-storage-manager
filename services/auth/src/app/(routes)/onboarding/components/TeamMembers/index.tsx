@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TeamMember } from '../types';
 import { TeamHeader } from './components/TeamHeader';
 import { DirectorForm } from './components/DirectorForm';
@@ -6,20 +6,39 @@ import { DirectorsList } from './components/DirectorsList';
 import { AddDirectorButton } from './components/AddDirectorButton';
 import { NavigationButtons } from './components/NavigationButtons';
 import { VerificationView } from './components/VerificationView';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { updateTeamMembers } from '@/store/slices/onboardingSlice';
 
 interface TeamMembersProps {
-    onBack?: () => void;
-    onNext: (members: TeamMember[]) => void;
+    onNext: () => void;
     disabled?: boolean;
 }
 
-export function TeamMembers({ onBack, onNext, disabled = false }: TeamMembersProps) {
+export function TeamMembers({ onNext, disabled = false }: TeamMembersProps) {
+    const dispatch = useAppDispatch();
+    const { user } = useAppSelector((state) => state.auth);
+    const { teamMembers } = useAppSelector((state) => state.onboarding);
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [showVerification, setShowVerification] = useState(false);
     const [formData, setFormData] = useState({ name: '', position: '', email: '' });
     const [formErrors, setFormErrors] = useState({ name: '', position: '', email: '' });
+
+    useEffect(() => {
+        if (teamMembers && teamMembers.length > 0) {
+            setMembers(
+                teamMembers.map(({ name, role, email }) => ({
+                    name,
+                    position: role,
+                    email
+                }))
+            );
+            setShowForm(false);
+            setShowVerification(true);
+            onNext();
+        }
+    }, [teamMembers])
 
     const validateField = (name: string, value: string) => {
         switch (name) {
@@ -57,8 +76,26 @@ export function TeamMembers({ onBack, onNext, disabled = false }: TeamMembersPro
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            setShowVerification(true);
-            onNext(members);
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            const result = await dispatch(updateTeamMembers({
+                userId: user.id,
+                members
+            })).unwrap();
+
+            if (result && result.success === true) {
+                setShowVerification(true);
+                
+                setTimeout(() => {
+                    onNext();
+                }, 1000);
+            } else {
+                throw new Error(result.message || 'Failed to update team members');
+            }
+        } catch (error) {
+            console.error('Failed to update team members:', error);
         } finally {
             setLoading(false);
         }
@@ -72,7 +109,15 @@ export function TeamMembers({ onBack, onNext, disabled = false }: TeamMembersPro
         <div className="max-w-2xl mx-auto p-6 space-y-8">
             <TeamHeader />
 
-            {showForm && (
+            {members.length > 0 && (
+                <DirectorsList members={members} onRemove={handleRemoveMember} />
+            )}
+
+            {!showForm && (
+                <AddDirectorButton onClick={() => setShowForm(true)} disabled={disabled} />
+            )}
+
+             {showForm && (
                 <DirectorForm
                     formData={formData}
                     formErrors={formErrors}
@@ -86,16 +131,7 @@ export function TeamMembers({ onBack, onNext, disabled = false }: TeamMembersPro
                 />
             )}
 
-            {members.length > 0 && (
-                <DirectorsList members={members} onRemove={handleRemoveMember} />
-            )}
-
-            {!showForm && (
-                <AddDirectorButton onClick={() => setShowForm(true)} disabled={disabled} />
-            )}
-
             <NavigationButtons
-                onBack={onBack}
                 onContinue={handleSubmit}
                 disabled={disabled || members.length === 0}
                 loading={loading}

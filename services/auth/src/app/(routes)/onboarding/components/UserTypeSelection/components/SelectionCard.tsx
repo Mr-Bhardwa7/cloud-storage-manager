@@ -10,9 +10,10 @@ interface SelectionCardProps {
     isSelected: boolean;
     features: Feature[];
     onClick: () => void;
+    isSubmitting?: boolean;
 }
 
-export function SelectionCard({ type, isSelected, features, onClick }: SelectionCardProps) {
+export function SelectionCard({ type, isSelected, features, onClick, isSubmitting }: SelectionCardProps) {
     return (
         <motion.div
             initial={{ scale: 1, opacity: 0.9 }}
@@ -33,7 +34,7 @@ export function SelectionCard({ type, isSelected, features, onClick }: Selection
                     <TypeIcon type={type} isSelected={isSelected} />
 
                     <div className="text-center">
-                        <h3 className="text-lg font-bold mb-1">
+                        <h3 className="text-lg font-bold mb-1 text-[oklch(var(--theme-foreground))]">
                             {type === 'individual' ? 'Personal Cloud' : 'Enterprise Cloud'}
                         </h3>
                         <p className="text-xs text-[oklch(var(--theme-muted-foreground))]">
@@ -51,6 +52,9 @@ export function SelectionCard({ type, isSelected, features, onClick }: Selection
                             ? 'text-[oklch(var(--theme-primary))] scale-105' 
                             : 'text-[oklch(var(--theme-muted-foreground))]'
                         }`}>
+                        {isSubmitting && (
+                            <div className="animate-spin w-4 h-4 border-b-2 border-[oklch(var(--theme-primary))] rounded-full"></div>
+                        )}
                         {isSelected ? "✓ Selected" : "Select Plan"}
                         <FiChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'transform translate-x-1' : ''}`} />
                     </div>

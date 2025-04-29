@@ -1,202 +1,280 @@
-import { useState, useEffect, useReducer, ReactNode } from "react";
-import { FiMail, FiPhone, FiMessageSquare, FiImage } from "react-icons/fi";
-import { PiBuildings } from "react-icons/pi";
-import { DetailsCard } from "./DetailsCard";
-import { QuestionHeader } from "./components/QuestionHeader";
-import { FileUpload } from "./components/FileUpload";
-import { TextInput } from "./components/TextInput";
+'use client';
 
-// Interfaces
+import { useEffect, useState, ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiCheckCircle } from 'react-icons/hi';
+import { FiMail, FiPhone, FiGlobe, FiType, FiInfo, FiUser } from 'react-icons/fi';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { updateBusinessDetails } from '@/store/slices/onboardingSlice';
+import { isEmpty } from 'lodash';
+
+type Step = 'name' | 'description' | 'email' | 'phone' | 'website' | 'role' | 'done';
+type AnswerKey = Exclude<Step, 'done'>;
+type UserType = 'company' | 'individual';
+
 interface BusinessDetailsProps {
-    type: "individual" | "company";
-    existingEmail?: string;
-    onNext: (details: BusinessDetailsData) => void;
-    disabled?: boolean;
+  userType: UserType;
+  onNext: (data: Record<string, string>) => void;
+  initialData?: Partial<Pick<Record<AnswerKey, string>, 'name' | 'email' | 'phone'>>;
+  values?: Record<string, string>;
 }
 
-export interface BusinessDetailsData {
-    name: string;
-    email: string;
-    phone: string;
-    description?: string;
-    logo?: string;
-    type: "individual" | "company";
-    stage?: "directors" | "verification";
-    verified?: boolean;
-    companyVerified?: boolean;
-    phoneVerified?: boolean;
-}
+const roles = ['Student', 'Freelancer', 'Developer', 'Content Creator', 'Researcher'];
 
-interface Question<K extends keyof BusinessDetailsData = keyof BusinessDetailsData> {
-    key: K;
-    question: string;
-    placeholder: string;
-    icon: ReactNode;
-    multiline?: boolean;
-    isFile?: boolean;
-}
+const icons: Record<Step, ReactNode> = {
+  name: <FiType className="text-[oklch(var(--theme-primary))] w-5 h-5" />,
+  description: <FiInfo className="text-[oklch(var(--theme-primary))] w-5 h-5" />,
+  email: <FiMail className="text-[oklch(var(--theme-primary))] w-5 h-5" />,
+  phone: <FiPhone className="text-[oklch(var(--theme-primary))] w-5 h-5" />,
+  website: <FiGlobe className="text-[oklch(var(--theme-primary))] w-5 h-5" />,
+  role: <FiUser className="text-[oklch(var(--theme-primary))] w-5 h-5" />,
+  done: <HiCheckCircle className="text-[oklch(var(--theme-primary))] w-6 h-6" />,
+};
 
-// Reducer for state management
-const reducer = (state: BusinessDetailsData, action: { key: keyof BusinessDetailsData; value: string }) => ({
-    ...state,
-    [action.key]: action.value,
-});
+export function BusinessDetails({ userType, onNext, initialData, values }: BusinessDetailsProps) {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
 
-export function BusinessDetails({ type, existingEmail, onNext, disabled = false }: BusinessDetailsProps) {
-    const [currentStep, setCurrentStep] = useState(0);
-    const [showBusinessCard, setShowBusinessCard] = useState(false);
+  const steps: Step[] =
+    userType === 'company'
+      ? ['name', 'description', 'email', 'phone', 'website', 'done']
+      : ['phone', 'role', 'done'];
 
-    const questions: Question[] = [
-        {
-            key: "name",
-            question: type === "company" ? "What's your company's name?" : "What's your full name?",
-            placeholder: type === "company" ? "e.g., Acme Corporation" : "e.g., John Doe",
-            icon: <PiBuildings className="w-5 h-5" />,
-        },
-        ...(type === "company"
-            ? [
-                  {
-                      key: "logo" as keyof BusinessDetailsData,
-                      question: "Upload your company logo",
-                      placeholder: "Upload logo (optional)",
-                      icon: <FiImage className="w-5 h-5" />,
-                      isFile: true,
-                  },
-                  {
-                      key: "description" as keyof BusinessDetailsData,
-                      question: "What does your company do?",
-                      placeholder: "e.g., We provide innovative cloud solutions",
-                      icon: <FiMessageSquare className="w-5 h-5" />,
-                      multiline: true,
-                  },
-              ]
-            : []),
-        {
-            key: "email",
-            question: type === "company" ? "What's your business email?" : "What's your email address?",
-            placeholder: type === "company" ? "e.g., contact@company.com" : "e.g., john@example.com",
-            icon: <FiMail className="w-5 h-5" />,
-        },
-        {
-            key: "phone",
-            question: type === "company" ? "What's your business phone?" : "What's your contact number?",
-            placeholder: type === "company" ? "e.g., +1 (555) 123-4567" : "e.g., +1 (555) 987-6543",
-            icon: <FiPhone className="w-5 h-5" />,
-        },
-    ];
+  const questions: Record<Step, string> = {
+    name: userType === 'company' ? "What's your company name?" : "What's your name?",
+    description: 'What does your company do?',
+    email: "What's your email?",
+    phone: "What's your mobile number?",
+    website: "What's your company website?",
+    role: 'Pick a role for a better experience',
+    done: '',
+  };
 
-    const [formState, dispatch] = useReducer(reducer, {
-        name: "",
-        email: existingEmail || "",
-        phone: "",
-        description: "",
-        type,
-        verified: false,
-        stage: type === "company" ? "directors" : "verification",
-    });
+  const placeholders: Record<Step, string> = {
+    name: userType === 'company' ? 'e.g. Bytewave Inc.' : 'e.g. John Doe',
+    description: 'e.g. We help manage cloud storage for teams.',
+    email: 'e.g. hello@example.com',
+    phone: 'e.g. +1 234 567 890',
+    website: 'e.g. https://example.com (optional)',
+    role: 'e.g. Developer',
+    done: '',
+  };
 
-    const currentQuestion = questions[currentStep];
-    const [inputValue, setInputValue] = useState(formState[currentQuestion.key]?.toString() || "");
+  const [step, setStep] = useState<Step>(steps[0]);
+  const [answers, setAnswers] = useState<Record<AnswerKey, string>>({
+    name: userType !== 'company' ? initialData?.name || '' : '',
+    description: '',
+    email: initialData?.email || '',
+    phone: initialData?.phone || '',
+    website: '',
+    role: '',
+  });
 
-    useEffect(() => {
-        setInputValue(formState[currentQuestion.key]?.toString() || "");
-    }, [currentStep, formState, currentQuestion.key]);
+  const [input, setInput] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [hasCalledNext, setHasCalledNext] = useState(false);
 
-    // Validation
-    const isCurrentStepValid = () => {
-        const value = inputValue.trim();
-        if (!value) return false;
+  useEffect(() => {
+   if(!isEmpty(values)) {
+     setAnswers(values as Record<AnswerKey, string>);
+     setStep('done');
+   }
+  }, [values]);
 
-        switch (currentQuestion.key) {
-            case "email":
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-            case "phone":
-                return /^\+?[\d\s-]{10,}$/.test(value);
-            default:
-                return value.length > 1;
-        }
-    };
+  useEffect(() => {
+    if (step !== 'done') {
+      const prefill = answers[step as AnswerKey];
+      setInput(prefill || '');
+    }
+  }, [step, answers]);
 
-    const handleInputChange = (value: string) => {
-        if (!disabled) setInputValue(value);
-    };
+  useEffect(() => {
+    if (step === 'done' && !hasCalledNext) {
+      const timeout = setTimeout(() => {
+        onNext(answers);
+        setHasCalledNext(true);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [step, hasCalledNext, answers, onNext]);
 
-    const handleNext = () => {
-        if (!isCurrentStepValid() && !currentQuestion.isFile) return;
+  const validate = (): string | null => {
+    if (step === 'website') return null;
+    if (!input.trim()) return 'This field is required.';
+    if (step === 'email' && !/\S+@\S+\.\S+/.test(input)) return 'Invalid email format.';
+    if (step === 'phone' && input.length < 10) return 'Invalid phone number.';
+    return null;
+  };
 
-        dispatch({ key: currentQuestion.key, value: inputValue });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
-        if (currentStep < questions.length - 1) {
-            setCurrentStep((prev) => prev + 1);
-        } else {
-            setShowBusinessCard(true);
-        }
-    };
+    try {
+      const updatedAnswers = { ...answers, [step]: input.trim() };
+      setAnswers(updatedAnswers);
+      setError(null);
 
-    const [uploadProgress, setUploadProgress] = useState(0);
+      const nextStep = steps[steps.indexOf(step) + 1];
+      if (nextStep === 'done' && user) {
+        await dispatch(updateBusinessDetails({
+          userId: user.id,
+          name: updatedAnswers.name,
+          email: updatedAnswers.email,
+          description: updatedAnswers.description,
+          phone: updatedAnswers.phone,
+          website: updatedAnswers.website,
+          role: updatedAnswers.role,
+        })).unwrap();
+      }
 
-    const handleFileUpload = (file: File) => {
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size should be less than 5MB');
-            return;
-        }
-        setUploadProgress(0);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-                setUploadProgress(100);
-                handleInputChange(reader.result);
-                setTimeout(() => {
-                    handleNext();
-                }, 1000);
-            }
-        };
-        reader.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const progress = (event.loaded / event.total) * 100;
-                setUploadProgress(progress);
-            }
-        };
-        reader.readAsDataURL(file);
-    };
+      setTimeout(() => setStep(nextStep), 300);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save details. Please try again.';
+      setError(errorMessage);
+    }
+};
 
-    return (
-        <div className="max-w-2xl mx-auto space-y-8">
-            {showBusinessCard ? (
-                <div className="flex items-center justify-center">
-                    <DetailsCard
-                        details={formState}
-                        onConfirm={() => onNext(formState)}
-                        type={type}
-                        disabled={disabled}
-                    />
+  return (
+    <div className="w-full max-w-3xl mx-auto px-4 py-2 font-sans">
+      <div className="flex flex-col gap-10 w-full">
+        {step !== 'done' && (
+          <form onSubmit={handleSubmit} className="bg-[oklch(var(--theme-background))] border border-[oklch(var(--theme-border))] shadow-xl rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-5 bg-[oklch(var(--theme-muted))] border-b border-[oklch(var(--theme-border))]">
+              <div className="bg-[oklch(var(--theme-primary)/0.1)] rounded-full p-2">{icons[step]}</div>
+              <h2 className="text-[oklch(var(--theme-foreground))] font-semibold text-lg">{questions[step]}</h2>
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35 }}
+                className="p-6 sm:p-8 space-y-4"
+              >
+                {step === 'phone' ? (
+                  <PhoneInput
+                    international
+                    defaultCountry="IN"
+                    value={input}
+                    onChange={(value) => {
+                      setInput(value || '');
+                      setError(null);
+                    }}
+                    placeholder={placeholders[step]}
+                    className="w-full bg-[oklch(var(--theme-muted))] text-[oklch(var(--theme-foreground))] border border-[oklch(var(--theme-border))] rounded-xl px-5 py-3 focus-within:ring-2 focus-within:ring-[oklch(var(--theme-primary))] focus-within:outline-none"
+                  />
+                ) : step === 'role' ? (
+                  <select
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      setError(null);
+                    }}
+                    className={`w-full px-5 py-3 text-base bg-[oklch(var(--theme-muted))] border ${
+                      error ? 'border-red-400' : 'border-[oklch(var(--theme-border))]'
+                    } rounded-xl text-[oklch(var(--theme-foreground))] focus:ring-2 focus:ring-[oklch(var(--theme-primary))] focus:outline-none`}
+                  >
+                    <option value="" className="bg-[oklch(var(--theme-background))]">Select Role</option>
+                    {roles.map((role) => (
+                      <option key={role} value={role} className="bg-[oklch(var(--theme-background))]">
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                 <input
+                  type={step === 'email' ? 'email' : step === 'website' ? 'url' : 'text'}
+                  value={input}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (step === 'website') {
+                      if (value && !/^https?:\/\//i.test(value)) {
+                        value = 'https://' + value;
+                      }
+                    }
+                    setInput(value);
+                    setError(null);
+                  }}
+                  placeholder={placeholders[step]}
+                  maxLength={120}
+                  className={`w-full px-5 py-3 text-base text-[oklch(var(--theme-foreground))] placeholder-[oklch(var(--theme-muted-foreground))] bg-[oklch(var(--theme-muted))] rounded-xl border ${
+                    error ? 'border-red-400' : 'border-[oklch(var(--theme-border))]'
+                  } focus:ring-2 focus:ring-[oklch(var(--theme-primary))] focus:outline-none transition`}
+                />
+                )}
+
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-red-500 font-medium">{error || ''}</span>
+                  <span className="text-[oklch(var(--theme-primary))]">{input.length} / 120 characters</span>
                 </div>
-            ) : (
-                <div className="flex-1 space-y-4">
-                    <QuestionHeader
-                        icon={currentQuestion.icon}
-                        question={currentQuestion.question}
-                        placeholder={currentQuestion.placeholder}
-                    />
+              </motion.div>
+            </AnimatePresence>
 
-                    {currentQuestion.isFile ? (
-                        <FileUpload
-                            inputValue={inputValue}
-                            uploadProgress={uploadProgress}
-                            onFileChange={handleFileUpload}
-                            disabled={disabled}
-                        />
-                    ) : (
-                        <TextInput
-                            value={inputValue}
-                            onChange={handleInputChange}
-                            onNext={handleNext}
-                            isValid={isCurrentStepValid()}
-                            disabled={disabled}
-                        />
-                    )}
-                </div>
-            )}
-        </div>
-    );
+            <div className="flex justify-end px-6 py-4 bg-[oklch(var(--theme-muted))] border-t border-[oklch(var(--theme-border))]">
+              <button
+                type="submit"
+                className="bg-[oklch(var(--theme-primary))] text-[oklch(var(--theme-primary-foreground))] px-6 py-2 rounded-xl text-sm font-medium shadow hover:bg-[oklch(var(--theme-primary)/0.8)] transition"
+              >
+                Continue
+              </button>
+            </div>
+          </form>
+        )}
+
+        {step === 'done' && (
+          <motion.div
+            key="summary"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="bg-[oklch(var(--theme-background))] border border-[oklch(var(--theme-border))] rounded-3xl shadow-xl"
+          >
+            <div className="flex items-center gap-3 px-6 py-6 border-b border-[oklch(var(--theme-border))] bg-[oklch(var(--theme-muted))] rounded-3xl">
+              <div className="bg-[oklch(var(--theme-primary)/0.1)] rounded-full p-2">{icons.done}</div>
+              <h2 className="text-[oklch(var(--theme-foreground))] font-bold text-lg">Summary</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 sm:p-8">
+              {(Object.entries(answers) as [AnswerKey, string][]).map(
+                ([key, value]) =>
+                  value && <SummaryField key={key} label={capitalize(key)} value={value} />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span
+        className="text-xs uppercase font-medium tracking-wide mb-1"
+        style={{ color: "oklch(var(--theme-muted-foreground))" }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-base font-normal"
+        style={{ color: "oklch(var(--theme-foreground))" }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

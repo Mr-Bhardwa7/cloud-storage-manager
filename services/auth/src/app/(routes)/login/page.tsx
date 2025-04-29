@@ -4,7 +4,6 @@ import { NetworkAnimation } from "@/components/network-animation";
 const RenderActionCard = dynamic(() => import('./render-action-card'), { ssr: false });
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { CLOUDLINK_DASHBOARD } from "@/constants/routes";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -58,7 +57,6 @@ export default function LoginPage() {
         email,
         otp,
         redirect: true, 
-        callbackUrl: CLOUDLINK_DASHBOARD
       });
 
       // Optional: handle response manually if redirect is false

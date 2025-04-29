@@ -2,6 +2,9 @@ import {  FiShield, FiCloud } from 'react-icons/fi';
 import { SelectionHeader } from './components/SelectionHeader';
 import { SelectionCard } from './components/SelectionCard';
 import { Features } from '../types';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useState } from 'react';
+import { updateUserType } from '@/store/slices/onboardingSlice';
 
 interface UserTypeSelectionProps {
     value: 'individual' | 'company' | null;
@@ -21,6 +24,31 @@ export function UserTypeSelection({ value, onChange, selected }: UserTypeSelecti
         ]
     };
 
+    const dispatch = useAppDispatch();
+    const { user } = useAppSelector((state) => state.auth);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const onSelect = async (type: 'individual' | 'company') => {
+        if (isSubmitting || !user || value) return;
+        
+        setIsSubmitting(true);
+        
+        try {
+            await dispatch(updateUserType({
+                userId: user.id,
+                userType: type
+            })).unwrap();
+            
+            setTimeout(() => {
+                onChange(type);
+                setIsSubmitting(false);
+            }, 1000);
+        } catch (error) {
+            setIsSubmitting(false);
+            console.error('Failed to update user type:', error);
+        }
+    };
+
     return (
         <div className="space-y-8 px-4 sm:px-0 max-w-[calc(100vw-32px)] sm:max-w-none mx-auto">
             <SelectionHeader 
@@ -35,7 +63,8 @@ export function UserTypeSelection({ value, onChange, selected }: UserTypeSelecti
                         type={type as 'individual' | 'company'}
                         isSelected={value === type || selected === type}
                         features={features[type as keyof Features]}
-                        onClick={() => onChange(type as 'individual' | 'company')}
+                        onClick={() => onSelect(type as 'individual' | 'company')}
+                        isSubmitting={isSubmitting}
                     />
                 ))}
             </div>

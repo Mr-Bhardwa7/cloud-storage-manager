@@ -7,84 +7,52 @@
 
   /* Light Mode Theme */
   /* Add Semantic Color Tokens */
-  --theme-primary: 0.546 0.245 262.881;
-  /* blue-600 */
-  --theme-primary-light: 0.623 0.214 259.815;
-  /* blue-500 */
-  --theme-primary-dark: 0.488 0.243 264.376;
-  /* blue-700 */
+  --theme-primary: 0.546 0.245 262.881; /* Vibrant Blue */
+  --theme-primary-light: 0.623 0.214 259.815; /* Lighter Blue */
+  --theme-primary-dark: 0.488 0.243 264.376; /* Darker Blue */
 
-  --theme-secondary: 0.541 0.281 293.009;
-  /* violet-600 */
-  --theme-secondary-light: 0.606 0.25 292.717;
-  /* violet-500 */
-  --theme-secondary-dark: 0.491 0.27 292.581;
-  /* violet-700 */
+  --theme-secondary: 0.541 0.281 293.009; /* Rich Purple */
+  --theme-secondary-light: 0.606 0.25 292.717; /* Soft Purple */
+  --theme-secondary-dark: 0.491 0.27 292.581; /* Deep Purple */
 
-  --theme-destructive: 0.577 0.245 27.325;
+  --theme-background: 0.98 0.005 250; /* Clean White */
+  --theme-foreground: 0.208 0.042 265.755; /* Deep Blue-Gray */
 
-  --theme-background: 1 0 0;
-  /* white */
-  --theme-foreground: 0.208 0.042 265.755;
-  /* slate-900 */
+  --theme-muted: 0.95 0.007 247.896; /* Soft Gray */
+  --theme-muted-foreground: 0.554 0.046 257.417; /* Medium Gray */
 
-  --theme-muted: 0.968 0.007 247.896;
-  /* slate-100 */
-  --theme-muted-foreground: 0.554 0.046 257.417;
-  /* slate-500 */
-
-  --theme-border: 0.929 0.013 255.508;
-  /* slate-200 */
+  --theme-border: 0.91 0.013 255.508; /* Light Gray Border */
 
   /* Status Colors */
-  --theme-success: 0.627 0.194 149.214;
-  /* green-600 */
-  --theme-error: 0.577 0.245 27.325;
-  /* red-600 */
-  --theme-warning: 0.666 0.179 58.318;
-  /* amber-600 */
-  --theme-info: 0.588 0.158 241.966;
-  /* sky-600 */
+  --theme-success: 0.627 0.194 149.214; /* Green */
+  --theme-error: 0.577 0.245 27.325; /* Red */
+  --theme-warning: 0.666 0.179 58.318; /* Amber */
+  --theme-info: 0.588 0.158 241.966; /* Sky Blue */
 }
 
 /* Dark Mode Theme */
 [data-theme="dark"] {
-  --theme-primary: 0.623 0.214 259.815;
-  /* blue-500 */
-  --theme-primary-light: 0.707 0.165 254.624;
-  /* blue-400 */
-  --theme-primary-dark: 0.546 0.245 262.881;
-  /* blue-600 */
+  --theme-primary: 0.67 0.214 259.815; /* Brighter Blue */
+  --theme-primary-light: 0.75 0.165 254.624; /* Glowing Blue */
+  --theme-primary-dark: 0.546 0.245 262.881; /* Rich Blue */
 
-  --theme-secondary: 0.606 0.25 292.717;
-  /* violet-500 */
-  --theme-secondary-light: 0.702 0.183 293.541;
-  /* violet-400 */
-  --theme-secondary-dark: 0.541 0.281 293.009;
-  /* violet-600 */
+  --theme-secondary: 0.65 0.25 292.717; /* Bright Purple */
+  --theme-secondary-light: 0.73 0.183 293.541; /* Glowing Purple */
+  --theme-secondary-dark: 0.541 0.281 293.009; /* Deep Purple */
 
-  --theme-background: 0.129 0.042 264.695;
-  /* slate-950 */
-  --theme-foreground: 0.984 0.003 247.858;
-  /* slate-50 */
+  --theme-background: 0.11 0.042 264.695; /* Deep Dark Blue */
+  --theme-foreground: 0.96 0.003 247.858; /* Crisp White */
 
-  --theme-muted: 0.279 0.041 260.031;
-  /* slate-800 */
-  --theme-muted-foreground: 0.704 0.04 256.788;
-  /* slate-400 */
+  --theme-muted: 0.22 0.041 260.031; /* Dark Gray */
+  --theme-muted-foreground: 0.75 0.04 256.788; /* Light Gray */
 
-  --theme-border: 0.208 0.042 265.755;
-    /* slate-900 */
+  --theme-border: 0.18 0.042 265.755; /* Dark Border */
 
   /* Status Colors - Adjusted for Dark Mode */
-  --theme-success: 0.723 0.219 149.579;
-  /* green-500 */
-  --theme-error: 0.637 0.237 25.331;
-  /* red-500 */
-  --theme-warning: 0.769 0.188 70.08;
-  /* amber-500 */
-  --theme-info: 0.685 0.169 237.323;
-  /* sky-500 */
+  --theme-success: 0.75 0.219 149.579; /* Bright Green */
+  --theme-error: 0.69 0.237 25.331; /* Bright Red */
+  --theme-warning: 0.79 0.188 70.08; /* Bright Amber */
+  --theme-info: 0.72 0.169 237.323; /* Bright Sky Blue */
 }
 
 
@@ -114,4 +82,77 @@
 
 .animate-fade-in {
     animation: fade-in 0.3s ease-out forwards;
+}
+
+.PhoneInputInput {
+    outline: none;
+}
+
+@keyframes breathe-glow {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    }
+
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+}
+
+@keyframes float-glow {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
+
+@keyframes shimmer-background {
+    0% {
+        background-position: 0% 0%;
+    }
+
+    100% {
+        background-position: 100% 100%;
+    }
+}
+
+.animate-breathe-glow {
+    animation: breathe-glow 4s ease-in-out infinite;
+}
+
+.animate-float-glow {
+    animation: float-glow 6s ease-in-out infinite;
+}
+
+.animate-shimmer-background {
+    animation: shimmer-background 30s linear infinite;
+    background-size: 200% 200%;
+}
+
+@keyframes soft-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.85;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
+.animate-soft-pulse {
+    animation: soft-pulse 2.4s ease-in-out infinite;
 }

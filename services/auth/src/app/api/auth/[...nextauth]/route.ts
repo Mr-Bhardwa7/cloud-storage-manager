@@ -8,8 +8,6 @@ import { getDeviceInfo } from "@/utils/device";
 import { generateToken } from "@/utils/auth";
 import { headers } from "next/headers";
 import { AUTHLY_LOGIN, AUTHLY_ERROR, AUTHLY_ONBOARDING } from "@/constants/routes";
-import { setServerCookie } from "@/utils/cookie";
-import { v4 as uuidv4 } from "uuid";
 import { store } from "@/store/store";
 import { setUser } from "@/store/slices/authSlice";
 
@@ -22,6 +20,18 @@ declare module "next-auth" {
     token: string;
     expiresAt: Date;
     device: string;
+  }
+
+  interface User {
+    access_token?: string;
+    isNew?: boolean;
+  }
+
+  interface JWT {
+    id?: string;
+    email?: string;
+    isNew?: boolean;
+    access_token?: string;
   }
 }
 
@@ -55,17 +65,8 @@ const authOptions: NextAuthOptions = {
 
         let user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          include: { onboarding: true }
         });
-
-        const headersList = await headers();
-        const device = JSON.stringify(getDeviceInfo(headersList));
-        const sessionToken = generateToken({ id: uuidv4(), email: credentials.email, isNew: true, device });
-
-        const sessionData = {
-          sessionToken,
-          device,
-          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        };
 
         if (!user) {
           [user] = await prisma.$transaction([
@@ -79,33 +80,24 @@ const authOptions: NextAuthOptions = {
                     type: "credentials"
                   },
                 },
-                sessions: {
-                  create: sessionData,
-                },
               },
+              include: {
+                onboarding: true
+              }
             }),
           ]);
-        } else {
-          await prisma.session.create({
-            data: {
-              ...sessionData,
-              userId: user.id,
-            },
-          });
         }
 
-        await setServerCookie('next-auth.session-token', sessionToken, {
-            maxAge: 60 * 5,
-            httpOnly: true,
-            secure: true
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          isNew: true,
-        };
+        if (user) {
+           return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            isNew: !user.onboarding?.completed,
+          };
+        }
+      
+          return null;
       },
     }),
   ],
@@ -114,67 +106,9 @@ const authOptions: NextAuthOptions = {
     error: AUTHLY_ERROR,
     newUser: AUTHLY_ONBOARDING,
   },
-  session: { strategy: "database", maxAge: 7 * 24 * 60 * 60 },
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-          include: { onboarding: true },
-        });
-
-        if (dbUser) {
-          const headersList = await headers();
-          const device = JSON.stringify(getDeviceInfo(headersList));
-
-          const existingSession = await prisma.session.findFirst({
-            where: {
-              userId: dbUser.id,
-              device,
-              expires: { gt: new Date() },
-            },
-            orderBy: { expires: "desc" },
-          });
-
-            token = {
-              ...token,
-              jti: existingSession?.sessionToken ?? generateToken({ email: user.email, device }),
-              sub: dbUser.id,
-              id: dbUser.id,
-              name: dbUser.name,
-              email: dbUser.email,
-              isNew: !dbUser.onboarding?.completed,
-            };
-        }
-      }
-
-      return token;
-    },
-    async session({ session, token }) {
-        if (!token?.jti) return session;
-        
-        session.user = {
-            id: token.id as string,
-            name: token.name ?? null,
-            email: token.email ?? null,
-            isNew: token.isNew as boolean,
-        };
-        
-        if (token.jti) {
-            const sessionDb = await prisma.session.findUnique({
-                where: { sessionToken: token.jti as string },
-            });
-
-            if (sessionDb) {
-                session.token = sessionDb.sessionToken;
-                session.expiresAt = sessionDb.expires;
-                session.device = sessionDb.device ?? "unknown";
-            }
-        }
-
-        return session;
-    },
-      async signIn({ user, profile, account }) {
+     async signIn({ user, profile, account }) {
         console.log("PROFILE ===>>", profile)
         console.log("ACCOUNT ===>>", account)
         console.log("user ===>>", user)
@@ -189,25 +123,26 @@ const authOptions: NextAuthOptions = {
         });
 
         
-          if (existingUser && account?.provider !== "credentials") {
-            const headersList = await headers();
-            const device = JSON.stringify(getDeviceInfo(headersList));
-            const sessionToken = generateToken({ email: user.email!, device });
-            const sessionData = {
-                sessionToken: sessionToken,
-                device,
-                expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-            };
-            
-            await prisma.session.create({
-                data: {
-                    ...sessionData,
-                    userId: existingUser?.id,
-                }
-            });
-        }
+        // if (existingUser && account && account?.provider !== "credentials") {
+        //     const headersList = await headers();
+        //     const device = JSON.stringify(getDeviceInfo(headersList));
+        //     const sessionToken = generateToken({ email: user.email!, device });
+        //     const sessionExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        //     const sessionData = {
+        //         sessionToken: sessionToken,
+        //         device,
+        //         expires: sessionExpiry, // 7 days
+        //     };
+          
+        //     await prisma.session.create({
+        //         data: {
+        //             ...sessionData,
+        //             userId: existingUser?.id,
+        //         }
+        //     });
+        // }
 
-        if(existingUser) {
+      if (existingUser) {
           store.dispatch(setUser({
             user: {
               id: existingUser.id!,
@@ -216,14 +151,66 @@ const authOptions: NextAuthOptions = {
               image: existingUser.image || null,
               isNew: !existingUser.onboarding?.completed,
             },
-            token: account?.access_token || "",
+            token: account?.access_token || user.access_token ||"",
             expiresAt: new Date(account?.expires_at || Date.now() + 7 * 24 * 60 * 60 * 1000),
           }));
         }
+        
+      return true;
+    },
+    async jwt({ token, user, trigger }) {
+      console.log("Token ===>>", token)
+        if (trigger === 'update' || (user && trigger === 'signIn')) {
+          token.isNew = user.isNew;
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email! },
+            include: { onboarding: true },
+          });
 
-        // ✅ Optional: Check onboarding only if user exists
-        if (existingUser && !existingUser.onboarding?.completed)  return AUTHLY_ONBOARDING;
-        return true;
+          if (dbUser) {
+            const headersList = await headers();
+            const device = JSON.stringify(getDeviceInfo(headersList));
+            const sessionToken = generateToken({ email: dbUser.email!, device, isNew: !dbUser.onboarding?.completed  });
+
+            token = {
+              ...token,
+              jti: sessionToken,
+              sub: dbUser.id,
+              name: dbUser.name,
+              email: dbUser.email,
+              isNew: !dbUser.onboarding?.completed,
+              access_token : user.access_token || token.access_token,
+            };
+          }
+        }
+
+      return token;
+    },
+    async session({ session, token }) {
+      if (!token?.jti) return session;
+
+      const headersList = await headers();
+      const device = JSON.stringify(getDeviceInfo(headersList));
+      const accessToken = generateToken({ 
+        id: token.sub as string,
+        email: token.email as string,
+        device 
+      });
+
+      session = {
+        ...session,
+        user: {
+          id: token.sub as string,
+          name: token.name ?? null,
+          email: token.email ?? null,
+          image: token.picture ?? null,
+          isNew: token.isNew as boolean,
+        },
+        token: accessToken,
+        device
+      };
+
+      return session;
     },
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) return `${baseUrl}${url}`;

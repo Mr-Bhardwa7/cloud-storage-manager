@@ -12,28 +12,51 @@ import { MobileHeader } from './components/MobileHeader';
 import { Sidebar } from './components/Sidebar';
 import { AIMessage } from './components/AIMessage';
 import { CLOUDLINK_DASHBOARD } from '@/constants/routes';
+import { NameInput } from './components/NameInput';
+import { useAppSelector } from '@/store/hooks';
+import { get, isEmpty } from 'lodash';
 
 type UserType = 'individual' | 'company' | null;
 
 export default function Onboarding() {
+    const { user } = useAppSelector((state) => state.auth);
+    const { userType: onBoardUserType, userDetails } = useAppSelector((state) => {
+        console.log("state ====>>>", state);
+        return state.onboarding;
+    });
     const [userType, setUserType] = useState<UserType>(null);
-    const [completedSteps, setCompletedSteps] = useState<number[]>([1]); // Start with step 1
+    const [username, setUsername] = useState<string | null>(null);
+    const [completedSteps, setCompletedSteps] = useState<number[]>([0]); // Start with step 1
     const lastStepRef = useRef<HTMLDivElement | null>(null);
     const router = useRouter();
     const [isCompleted, setIsCompleted] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
 
     const handleNext = () => {
-        setCompletedSteps(prev => [...prev, prev.length + 1]);
+        setCompletedSteps(prev => [...prev, prev.length]);
     };
 
-   useEffect(() => {
-    if (lastStepRef.current) {
-        setTimeout(() => {
-            lastStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 200); 
-    }
-}, [completedSteps]);
+    useEffect(() => {
+       if(!isEmpty(user?.name)) {
+           setUsername(user?.name || null);
+           handleNext();
+        }
+    }, [user?.name]);
+
+    useEffect(() => {
+        if (!isEmpty(onBoardUserType)) {
+            setUserType(onBoardUserType?.toLowerCase() as UserType);
+            handleNext();
+        }
+    }, [onBoardUserType]);
+
+    useEffect(() => {
+        if (lastStepRef.current) {
+            setTimeout(() => {
+                lastStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200); 
+        }
+    }, [completedSteps]);
 
     const handleComplete = () => {
         setIsCompleted(true);
@@ -87,37 +110,67 @@ export default function Onboarding() {
                                     step={step}
                                     completedSteps={completedSteps}
                                     userType={userType}
+                                    username={username}
                                 />
 
                                 <div className="lg:ml-14">
+                                    {(step === 0 && completedSteps.length === 1) && (
+                                        <NameInput
+                                            disabled={completedSteps.includes(1)}
+                                            onNext={(username) => {
+                                                setUsername(username);
+                                                handleNext();
+                                            }}
+                                        />
+                                    )}
                                     {step === 1 && (
                                         <UserTypeSelection
                                             value={userType}
                                             onChange={(value) => {
                                                if (!completedSteps.includes(2)) { 
                                                     setUserType(value);
-                                                    setTimeout(() => {
-                                                        handleNext();
-                                                    }, 1000);
                                                 }
                                             }}
                                         />
                                     )}
                                     {step === 2 && (
                                         <BusinessDetails
-                                            type={userType!}
-                                            onNext={handleNext}
-                                            disabled={completedSteps.includes(3)}
+                                            userType={userType!}
+                                            onNext={() => {
+                                                handleNext();
+                                            }}
+                                            values={!isEmpty(userDetails) ? (
+                                                userType === 'company' ?
+                                                    {
+                                                        name: userDetails?.name || '',
+                                                        email: userDetails?.email || '',
+                                                        description: userDetails?.description || '',
+                                                        website: userDetails?.website || '',
+                                                        phone: userDetails?.mobile || '',
+                                                    } : {
+                                                        name: user?.name || '',
+                                                        email: user?.email || '',
+                                                        phone: userDetails?.mobile || '',
+                                                        role: userDetails?.role || '',
+                                                    }
+                                            ) : {}}
+                                            initialData={{
+                                                name: user?.name || '',
+                                                email: user?.email || '',
+                                            }}
                                         />
                                     )}
                                     {step === 3 && userType === 'company' && (
                                         <TeamMembers
-                                            onNext={handleNext}
+                                            onNext={() => {
+                                                handleNext();
+                                            }}
                                             disabled={!completedSteps.includes(3)}
                                         />
                                     )}
                                     {((step === 3 && userType === 'individual') || (step === 4 && userType === 'company')) && (
                                         <MobileVerification
+                                            mobile={get(userDetails, 'mobile', '')}
                                             disabled={!completedSteps.includes(3)}
                                             onCompleted={handleComplete}
                                         />

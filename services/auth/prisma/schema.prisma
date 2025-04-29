@@ -92,6 +92,7 @@ model Individual {
     id           String     @id @default(uuid())
     onboardingId String     @unique
     mobile       String?
+    role         String?
     onboarding   Onboarding @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
 
     createdAt DateTime @default(now())
@@ -105,6 +106,7 @@ model Company {
     description  String?
     email        String
     mobile       String?
+    website      String?
     teamMembers  TeamMember[]
     onboarding   Onboarding   @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
 

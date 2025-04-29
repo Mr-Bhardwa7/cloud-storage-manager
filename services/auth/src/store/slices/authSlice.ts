@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction, current } from "@reduxjs/toolkit";
 
 interface User {
   id: string;
@@ -22,6 +22,25 @@ const initialState: AuthState = {
   expiresAt: null,
 };
 
+export const updateUserName = createAsyncThunk(
+  'auth/updateName',
+  async ({ email, name }: { email: string; name: string }) => {
+    const response = await fetch('/api/user', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, name }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update name');
+    }
+
+    return await response.json();
+  }
+);
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -43,6 +62,13 @@ export const authSlice = createSlice({
       state.token = null;
       state.expiresAt = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(updateUserName.fulfilled, (state, action) => {
+      if (state.user) {
+        state.user.name = action.payload.name;
+      }
+    });
   },
 });
 
