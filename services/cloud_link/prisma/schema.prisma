@@ -1,0 +1,123 @@
+// schema.prisma for CloudLink (MongoDB)
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+enum ProviderType {
+    google_drive
+    dropbox
+    one_drive
+    box
+    custom
+}
+
+enum SyncFrequency {
+    min15
+    min30
+    hour1
+    daily
+}
+
+enum ActivityType {
+    upload
+    download
+    share
+    delete
+}
+
+enum ActivityStatus {
+    success
+    failed
+    pending
+}
+
+enum NotificationType {
+    security
+    storage
+    sharing
+    sync
+}
+
+enum NotificationChannel {
+    email
+    push
+    desktop
+}
+
+model StorageProvider {
+    id            String        @id @default(auto()) @map("_id") @db.ObjectId
+    userId        String
+    teamId        String?
+    provider      ProviderType
+    providerName  String
+    accessToken   String
+    refreshToken  String?
+    tokenExpiry   DateTime?
+    syncFrequency SyncFrequency
+    autoSync      Boolean       @default(true)
+    isConnected   Boolean       @default(true)
+    quotaUsed     Float         @default(0)
+    quotaTotal    Float
+    lastSync      DateTime?
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+
+    // Relations
+    activities Activity[]
+}
+
+model Activity {
+    id         String         @id @default(auto()) @map("_id") @db.ObjectId
+    userId     String
+    providerId String         @db.ObjectId
+    type       ActivityType
+    fileId     String?
+    fileName   String?
+    filePath   String?
+    fileSize   Float?
+    action     String
+    status     ActivityStatus
+    createdAt  DateTime       @default(now())
+
+    // Relations
+    provider StorageProvider @relation(fields: [providerId], references: [id])
+}
+
+model SecurityLog {
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId      String
+    event       String // e.g., login, logout, settings_change
+    description String
+    ipAddress   String?
+    location    String?
+    userAgent   String?
+    createdAt   DateTime @default(now())
+}
+
+model Notification {
+    id        String              @id @default(auto()) @map("_id") @db.ObjectId
+    userId    String
+    type      NotificationType
+    channel   NotificationChannel
+    title     String
+    message   String
+    isRead    Boolean             @default(false)
+    createdAt DateTime            @default(now())
+}
+
+model NotificationPreference {
+    id             String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId         String   @unique
+    emailEnabled   Boolean  @default(true)
+    pushEnabled    Boolean  @default(true)
+    desktopEnabled Boolean  @default(false)
+    preferences    Json // Stores detailed preferences for each notification type
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+}

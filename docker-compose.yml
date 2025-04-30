@@ -86,18 +86,18 @@ services:
     networks:
       - app-network
 
-  # 🚀 PostgreSQL for CloudLink
+  # 🚀 MongoDB for CloudLink
   cloudlink-db:
-    image: postgres:15-alpine
+    image: mongo:6
     container_name: cloudlink-db
     environment:
-      POSTGRES_USER: cloud_user
-      POSTGRES_PASSWORD: cloud_pass
-      POSTGRES_DB: cloudlink_db
+      MONGO_INITDB_ROOT_USERNAME: cloud_user
+      MONGO_INITDB_ROOT_PASSWORD: cloud_pass
+      MONGO_INITDB_DATABASE: cloudlink_db
     ports:
-      - "5433:5432"  # Ensure this is exposed
+      - "27019:27017" 
     volumes:
-      - cloudlink-db-data:/var/lib/postgresql/data
+      - cloudlink-db-data:/data/db
     networks:
       - app-network
 
