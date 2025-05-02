@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface ImageUploadProps {
   label: string;
   preview: string | null;
@@ -18,7 +20,13 @@ export default function ImageUpload({ label, preview, onImageUpload, isRounded =
         />
         <div className={`h-24 w-24 mx-auto bg-gray-100 overflow-hidden ${isRounded ? 'rounded-full' : 'rounded-lg'}`}>
           {preview ? (
-            <img src={preview} alt={`${label} preview`} className="h-full w-full object-cover" />
+            <Image 
+              src={preview}
+              alt={`${label} preview`}
+              className="h-full w-full object-cover"
+              width={200}
+              height={200}
+            />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-gray-400">
               <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">

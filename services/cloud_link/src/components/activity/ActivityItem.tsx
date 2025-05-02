@@ -1,4 +1,5 @@
 import { Activity } from '@/types/activity';
+import Image from 'next/image';
 
 interface ActivityItemProps {
   activity: Activity;
@@ -20,10 +21,12 @@ export default function ActivityItem({ activity, onRemove, isDropdownOpen, onTog
     <div className="p-4 hover:bg-gray-50">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4">
-          <img
+          <Image
             src={activity.account.icon || '/default-storage-icon.svg'}
             alt={activity.account.name || 'Storage Account'}
-            className="w-8 h-8"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded"
           />
           <div>
             <h4 className="text-sm font-medium text-gray-900">{activity.title}</h4>

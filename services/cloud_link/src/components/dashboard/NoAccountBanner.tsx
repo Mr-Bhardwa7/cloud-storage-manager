@@ -22,10 +22,10 @@ export default function NoAccountBanner() {
 
       <div className="max-w-md mx-auto mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-         Let's Connect Your Cloud Storage
+          Let&rsquo;s Connect Your Cloud Storage
         </h2>
         <p className="text-gray-600">
-          I noticed you haven't connected any storage accounts yet. 
+          I noticed you haven&rsquo;t connected any storage accounts yet.
           Let me help you get started with your favorite providers!
         </p>
       </div>
@@ -33,7 +33,7 @@ export default function NoAccountBanner() {
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <button className="flex items-center px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all group">
           <Image 
-            src="/google-drive.svg" 
+            src="/account/google-drive.svg" 
             alt="Google Drive" 
             width={24} 
             height={24} 
@@ -44,7 +44,7 @@ export default function NoAccountBanner() {
         
         <button className="flex items-center px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all group">
           <Image 
-            src="/dropbox.svg" 
+            src="/account/dropbox.svg" 
             alt="Dropbox" 
             width={24} 
             height={24} 
@@ -55,7 +55,7 @@ export default function NoAccountBanner() {
       </div>
 
       <Link 
-        href="/settings" 
+        href="/account/connect-accounts" 
         className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
       >
         See other storage options

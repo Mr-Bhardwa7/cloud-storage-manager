@@ -113,6 +113,12 @@ export const onboardingSlice = createSlice({
       state.completed = action.payload.completed;
       state.teamMembers = action.payload.teamMembers;
     },
+    resetOnboarding: (state) => {
+      state.userType = initialState.userType;
+      state.userDetails = initialState.userDetails;
+      state.teamMembers = initialState.teamMembers;
+      state.completed = initialState.completed;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(updateUserType.fulfilled, (state, action) => {
@@ -131,5 +137,5 @@ export const onboardingSlice = createSlice({
   },
 });
 
-export const { setOnboardingDetails } = onboardingSlice.actions;
+export const { setOnboardingDetails, resetOnboarding } = onboardingSlice.actions;
 export default onboardingSlice.reducer;

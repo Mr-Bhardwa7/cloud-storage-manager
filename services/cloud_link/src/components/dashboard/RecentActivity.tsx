@@ -11,8 +11,10 @@ interface Activity {
   details?: string;
 }
 
+type FilterStatus = 'all' | 'success' | 'error' | 'pending';
+
 export default function RecentActivity() {
-  const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all');
+  const [filter, setFilter] = useState<FilterStatus>('all');
   const [showAll, setShowAll] = useState(false);
 
   const activities: Activity[] = [
@@ -65,7 +67,9 @@ export default function RecentActivity() {
         <div className="flex items-center gap-2">
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setFilter(e.target.value as FilterStatus)
+            }
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5"
           >
             <option value="all">All Activities</option>

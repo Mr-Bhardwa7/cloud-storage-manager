@@ -28,9 +28,8 @@ export default function ActivityList({
   const itemsPerPage = 4;
 
   // Filter activities based on search, provider, and date
-  // Add state for custom date range
-  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
-  const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
+  const [customStartDate] = useState<Date | null>(null);
+  const [customEndDate] = useState<Date | null>(null);
 
   // Update the filter logic to include custom date range
   const filteredActivities = useMemo(() => {

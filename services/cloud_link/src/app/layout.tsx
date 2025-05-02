@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { ThemeProviderWrapper } from "@/providers/theme-provider";
+import { StoreProvider } from '@/providers/StoreProvider';
+import { AuthProvider } from '@/providers/AuthProvider';
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Cloud Storage Management",
-  description: "Auth microservice",
+  description: "CloudLink microservice",
 };
 
 export default function RootLayout({
@@ -15,10 +17,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-[oklch(var(--theme-background))] antialiased">
-          <ThemeProviderWrapper>
-            {children}
+        <StoreProvider>
+          <AuthProvider>
+            <ThemeProviderWrapper>
+              {children}
             </ThemeProviderWrapper>
+          </AuthProvider>
+        </StoreProvider>
       </body>
     </html>
   );
 }
+

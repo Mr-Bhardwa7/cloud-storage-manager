@@ -1,8 +1,16 @@
+import Image from 'next/image';
+
 export default function UserDropdown() {
   return (
     <div className="hs-dropdown relative inline-flex">
       <button type="button" className="inline-flex flex-shrink-0 justify-center items-center h-10 w-10 rounded-lg text-gray-500 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <img className="inline-block size-8 rounded-full" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=320&h=320&q=80" alt="Profile" />
+        <Image 
+          src={'/default-avatar.png'} 
+          alt={'User Profile'}
+          width={32}
+          height={32}
+          className="inline-block size-8 rounded-full"
+        />
       </button>
       <div className="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60 bg-white shadow-md rounded-lg p-2 mt-2 end-0">
         <div className="py-3 px-5 -m-2 bg-gray-100 rounded-t-lg">

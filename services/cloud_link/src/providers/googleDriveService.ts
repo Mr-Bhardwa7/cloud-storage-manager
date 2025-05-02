@@ -1,6 +1,6 @@
-import { google } from 'googleapis';
-import type { OAuth2Client, Credentials } from 'google-auth-library';
+import { google, drive_v3 } from 'googleapis';
 import type { GoogleDriveFile, GoogleDriveTokens, GoogleDriveUser } from '@/types/google-drive';
+import { OAuth2Client } from 'google-auth-library';
 
 interface StorageQuota {
   limit: number;
@@ -18,7 +18,7 @@ interface ActivityLog {
 
 export class GoogleDriveService {
   private oauth2Client: OAuth2Client;
-  private drive: any;
+  private drive: drive_v3.Drive;
 
   constructor() {
     this.oauth2Client = new google.auth.OAuth2(
@@ -96,12 +96,16 @@ export class GoogleDriveService {
         pageSize: 1000,
       });
 
-      const typedFiles: GoogleDriveFile[] = (filesList.data.files || []).map((f:any) => ({
+      const typedFiles: GoogleDriveFile[] = (filesList.data.files || [])
+      .filter((f): f is drive_v3.Schema$File & { id: string; name: string; mimeType: string } =>
+        !!f.id && !!f.name && !!f.mimeType
+      )
+      .map((f) => ({
         id: f.id,
         name: f.name,
         mimeType: f.mimeType,
-        modifiedTime: f.modifiedTime,
-        size: parseInt(f.size || '0'),
+        modifiedTime: f.modifiedTime ?? '',
+        size: parseInt(f.size ?? '0'),
       }));
 
       await this.indexFiles(userId, typedFiles);
@@ -117,11 +121,11 @@ export class GoogleDriveService {
       const about = await this.drive.about.get({ fields: 'storageQuota' });
       const quota = about.data.storageQuota;
 
-      return {
-        limit: parseInt(quota?.limit || '0'),
-        used: parseInt(quota?.usage || '0'),
-        remaining: parseInt(quota?.limit || '0') - parseInt(quota?.usage || '0'),
-      };
+      const limit = parseInt(quota?.limit?.toString() || '0');
+      const used = parseInt(quota?.usage?.toString() || '0');
+      const remaining = limit - used;
+          
+      return { limit, used, remaining };
     } catch (error) {
       console.error('Error getting storage info:', error);
       throw new Error('Failed to get storage information');
@@ -214,7 +218,7 @@ async getActivityLogs(maxResults = 50): Promise<ActivityLog[]> {
     ]);
 
     const fileTypes: Record<string, number> = {};
-    (files.data.files || []).forEach((f:any) => {
+    (files.data.files || []).forEach((f:drive_v3.Schema$File) => {
       const type = f.mimeType || 'unknown';
       fileTypes[type] = (fileTypes[type] || 0) + 1;
     });
@@ -223,7 +227,7 @@ async getActivityLogs(maxResults = 50): Promise<ActivityLog[]> {
       ...user,
       used: storage.used,
       total: storage.limit,
-      sharedFileCount: (files.data.files || []).filter((f:any)=> f.shared)?.length || 0,
+      sharedFileCount: (files.data.files || []).filter((f:drive_v3.Schema$File)=> f.shared)?.length || 0,
       fileTypesBreakdown: fileTypes,
       versioningSupported: true,
     };
@@ -232,13 +236,16 @@ async getActivityLogs(maxResults = 50): Promise<ActivityLog[]> {
   // --- Placeholders for secure token/file storage ---
   private async storeTokens(userId: string, tokens: GoogleDriveTokens) {
     // TODO: Save tokens to DB securely
+    console.log('Tokens:', tokens,  userId);
   }
 
   private async removeTokens(userId: string) {
     // TODO: Remove tokens from DB
+    console.log('Remove tokens:', userId);
   }
 
   private async indexFiles(userId: string, files: GoogleDriveFile[]) {
     // TODO: Store file metadata in DB or indexer
+    console.log('Index files:', files, userId);
   }
 }

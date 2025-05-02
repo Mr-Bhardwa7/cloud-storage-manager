@@ -1,5 +1,6 @@
 'use client';
 
+import { useAppSelector } from '@/store/hooks';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import MobileBreadcrumb from '@/components/layout/MobileBreadcrumb';
@@ -8,7 +9,18 @@ import RecentActivity from '@/components/dashboard/RecentActivity';
 import NoAccountBanner from '@/components/dashboard/NoAccountBanner';
 
 export default function DashboardPage() {
-  const hasAccounts = false; 
+  const hasAccounts = false;
+  const { user } = useAppSelector((state) => state.user);
+  
+  // Get user's initials for the avatar
+  const getInitials = () => {
+    if (!user?.name) return 'U';
+    return user.name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <>
@@ -16,7 +28,7 @@ export default function DashboardPage() {
       <div className="-mt-px">
         <MobileBreadcrumb 
           items={[
-            { label: 'Application Layout', href: '#' },
+            { label: 'Account', href: '#' },
             { label: 'Dashboard', href: '#', current: true }
           ]} 
         />
@@ -27,10 +39,12 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between bg-white p-6 rounded-xl border border-gray-200">
             <div className="flex items-center gap-4">
               <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-xl font-semibold text-blue-600">JD</span>
+                <span className="text-xl font-semibold text-blue-600">{getInitials()}</span>
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">Welcome back, John Doe!</h1>
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  Welcome back, {user?.name || 'User'}!
+                </h1>
                 <p className="text-sm text-gray-500">Last login: Today at 9:42 AM</p>
               </div>
             </div>
