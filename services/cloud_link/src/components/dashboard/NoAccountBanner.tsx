@@ -5,6 +5,13 @@ import Link from 'next/link';
 import { IoArrowForward } from 'react-icons/io5';
 
 export default function NoAccountBanner() {
+
+  const handleGoogleConnect = async () => {
+    const res = await fetch('/account/api/connect/google-drive/auth-url');
+    const { url } = await res.json();
+    window.location.href = url; 
+  };
+  
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
       <div className="mb-6 relative">
@@ -31,7 +38,10 @@ export default function NoAccountBanner() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <button className="flex items-center px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all group">
+        <button 
+          onClick={handleGoogleConnect}
+          className="flex items-center px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all group cursor-pointer"
+        >
           <Image 
             src="/account/google-drive.svg" 
             alt="Google Drive" 

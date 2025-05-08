@@ -3,7 +3,6 @@
 import { useEffect, ReactNode, useState } from 'react';
 import {  usePathname } from 'next/navigation';
 import { useUserState } from '@/hooks/useUserState';
-import { deleteClientCookie } from '@/utils/cookie';
 
 const basePath =  '/account';
 const PUBLIC_PATHS = [
@@ -36,9 +35,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     const checkAuth = async () => {
       try {
-        // Only refresh if not authenticated and not already loading
         if (!isAuthenticated && !isLoading) {
-          await refreshUser();
+          const response = await refreshUser();
+          if ('error' in response) {
+            throw new Error("Failed to refresh user session");
+          }
         }
         setIsChecking(false);
       } catch (err) {
@@ -51,26 +52,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [pathname]); 
   
   // Handle authentication failure
-  const handleAuthFailure = () => {
-    // Clear auth cookies
-    deleteClientCookie('next-auth.session-token');
-    deleteClientCookie('next-auth.callback-url');
-    deleteClientCookie('next-auth.csrf-token');
-    
-    // Redirect to auth service login with proper callback URL
-    const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_URL || '/auth';
-    const currentPath = pathname || `${basePath}/dashboard`;
-    const fullUrl = window.location.origin + currentPath;
-    
-    window.location.href = `${authServiceUrl}/login?callbackUrl=${encodeURIComponent(fullUrl)}`;
+  const handleAuthFailure = async () => {
+    console.error('Logout failed:', error);
   };
-  
-  // Check authentication status after initial check
-  useEffect(() => {
-    if (!isPublicPath && !isChecking && !isLoading && !isAuthenticated) {
-      handleAuthFailure();
-    }
-  }, [isAuthenticated, isLoading, isChecking, isPublicPath]);
   
   // Show loading state while checking
   if (!isPublicPath && (isLoading || isChecking)) {
@@ -87,4 +71,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Render children once authenticated or on public paths
   return <>{children}</>;
 }
+
+
 

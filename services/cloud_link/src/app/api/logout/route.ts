@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if user wants to logout from all devices
+    const url = new URL(request.url);
+    const logoutAll = url.searchParams.get("all") === "true";
+    
     // Get the session token from cookies
     const sessionToken = request.cookies.get('next-auth.session-token')?.value;
     
     // Call Auth service to logout
     const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://gateway/api/auth';
-    const response = await fetch(`${authServiceUrl}/logout`, {
+    const response = await fetch(`${authServiceUrl}/logout${logoutAll ? '?all=true' : ''}`, {
       method: 'POST',
       headers: {
         'Authorization': sessionToken ? `Bearer ${sessionToken}` : '',
@@ -26,7 +30,10 @@ export async function POST(request: NextRequest) {
     
     // Create response with cleared cookies
     const logoutResponse = NextResponse.json(
-      { success: true, message: 'Logged out successfully' },
+      { 
+        success: true, 
+        message: logoutAll ? 'Logged out from all devices' : 'Logged out successfully' 
+      },
       { status: 200 }
     );
     
@@ -34,6 +41,7 @@ export async function POST(request: NextRequest) {
     logoutResponse.cookies.delete('next-auth.session-token');
     logoutResponse.cookies.delete('next-auth.callback-url');
     logoutResponse.cookies.delete('next-auth.csrf-token');
+    logoutResponse.cookies.delete('authly-sid');
     
     return logoutResponse;
   } catch (error) {
@@ -44,3 +52,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

@@ -16,8 +16,9 @@ export async function middleware(request: NextRequest) {
   }
   
   const sessionToken = request.cookies.get('next-auth.session-token')?.value;
+  const authlySID = request.cookies.get('authly-sid')?.value;
   
-  if (!sessionToken) {
+  if (!sessionToken || !authlySID) {
     const loginUrl = new URL(AUTH_LOGIN_URL, request.url);
     
     const callbackPath = pathname.startsWith(BASE_PATH) 

@@ -10,7 +10,7 @@ import {
   Loader,
 } from 'nextuiq';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AUTHLY_LOGIN } from '@/constants/routes';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -27,14 +27,16 @@ const publicRoutes = [
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const { isLoading, isAuthenticated } = useAuthState();
-  // const isLoading = false;
-  // const isAuthenticated = true;
   const router = useRouter();
   const pathname = usePathname();
-  const showDialog = !isAuthenticated && !publicRoutes.includes(pathname);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
-    console.log('isAuthenticated', isAuthenticated, pathname);
+    const timer = setTimeout(() => {
+      setShowDialog(!isAuthenticated && !publicRoutes.includes(pathname));
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [isAuthenticated, pathname]);
 
   if (isLoading) {
