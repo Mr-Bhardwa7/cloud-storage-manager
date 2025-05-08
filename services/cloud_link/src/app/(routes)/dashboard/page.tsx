@@ -7,6 +7,7 @@ import MobileBreadcrumb from '@/components/layout/MobileBreadcrumb';
 import ConnectedAccounts from '@/components/dashboard/ConnectedAccounts';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import NoAccountBanner from '@/components/dashboard/NoAccountBanner';
+import { formatLastActive } from '@/utils/date';
 
 export default function DashboardPage() {
   const hasAccounts = false;
@@ -43,9 +44,9 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-semibold text-gray-900">
-                  Welcome back, {user?.name || 'User'}!
+                  Welcome back, {user?.name ? `${user?.name}!` : ''} 
                 </h1>
-                <p className="text-sm text-gray-500">Last login: Today at 9:42 AM</p>
+                <p className="text-sm text-gray-500">Last login: {formatLastActive(user?.lastActive)}</p>
               </div>
             </div>
             {

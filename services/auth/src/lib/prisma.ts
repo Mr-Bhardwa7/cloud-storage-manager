@@ -15,7 +15,7 @@ const prismaClientSingleton = () => {
     .then(() => {
       console.log('Successfully connected to the database');
     })
-    .catch((error) => {
+    .catch((error: unknown) => {
       console.error('Database connection error:', error);
       throw error;
     });

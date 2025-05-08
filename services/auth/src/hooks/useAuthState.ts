@@ -51,7 +51,7 @@ export function useAuthState() {
             return;
         }
 
-        const syncStoreWithDB = isEmpty(authState.user) || isEmpty(userDetails) || (userType === 'company' && teamMembers.length === 0);
+        const syncStoreWithDB = isEmpty(authState?.user) || isEmpty(userDetails) || (userType === 'company' && teamMembers.length === 0);
         console.log("syncStoreWithDB", syncStoreWithDB)
         if (status === 'authenticated' && session?.user?.email && session?.token && syncStoreWithDB) {
             fetchUserData(session.user.email, session.token)
@@ -78,7 +78,20 @@ export function useAuthState() {
                                 teamMembers: teamMembers || [],
                             }));
                         }
-                    
+                    } else {
+                        console.error('Failed to fetch user data');
+                        const cookieNames = [
+                          "next-auth.session-token",
+                          "next-auth.callback-url",
+                          "next-auth.csrf-token",
+                          "__Secure-next-auth.session-token",
+                          "__Host-next-auth.csrf-token",
+                          "authly-sid"
+                        ];
+                        
+                        cookieNames.forEach(name => {
+                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+                        });
                     }
                 });
         }

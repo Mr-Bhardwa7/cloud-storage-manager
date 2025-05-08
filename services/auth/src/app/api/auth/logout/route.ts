@@ -3,62 +3,76 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { store } from "@/store/store";
-import { logout as logoutAction } from "@/store/slices/authSlice";
-import { resetOnboarding } from "@/store/slices/onboardingSlice";
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if user wants to logout from all devices
+    const url = new URL(request.url);
+    const logoutAll = url.searchParams.get("all") === "true";
+    
     // Get the current session
     const session = await getServerSession(authOptions);
+    let userId = session?.user?.id;
+    let sessionToken = session?.token;
     
-    // If there's a session, delete it from the database
-    if (session?.user?.id) {
-      // Delete the session from the database
+    // If no session found, try the Authorization header
+    if (!sessionToken) {
+      const authHeader = request.headers.get('Authorization');
+      sessionToken = authHeader?.replace('Bearer ', '');
+    }
+    
+    // If still no session token, try the cookie
+    if (!sessionToken) {
+      sessionToken = request.cookies.get('next-auth.session-token')?.value;
+    }
+    
+    // If we have a token but no user ID, try to get the user ID from the session
+    if (sessionToken && !userId) {
+      const dbSession = await prisma.session.findUnique({
+        where: { sessionToken },
+        select: { userId: true }
+      });
+      userId = dbSession?.userId;
+    }
+    
+    // Delete the appropriate sessions
+    if (logoutAll && userId) {
+      // Delete all sessions for this user
       await prisma.session.deleteMany({
-        where: {
-          userId: session.user.id
-        }
+        where: { userId }
+      });
+    } else if (sessionToken) {
+      // Delete only the current session
+      await prisma.session.deleteMany({
+        where: { sessionToken }
       });
     }
     
-    // Get the authorization token from the request header
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    
-    if (token) {
-      // Delete the specific session with this token if it exists
-      await prisma.session.deleteMany({
-        where: {
-          sessionToken: token
-        }
-      });
-    }
-    
-    // Clear Redux state
-    store.dispatch(logoutAction());
-    store.dispatch(resetOnboarding());
-    
-    // Clear cookies
+    // Clear cookies from the server
     const cookieStore = await cookies();
-    cookieStore.delete('next-auth.session-token');
-    cookieStore.delete('next-auth.callback-url');
-    cookieStore.delete('next-auth.csrf-token');
-    cookieStore.delete('__Secure-next-auth.session-token');
-    cookieStore.delete('__Host-next-auth.csrf-token');
+    const cookieNames = [
+      "next-auth.session-token",
+      "next-auth.callback-url",
+      "next-auth.csrf-token",
+      "__Secure-next-auth.session-token",
+      "__Host-next-auth.csrf-token",
+      "authly-sid"
+    ];
+    
+    cookieNames.forEach(name => {
+      cookieStore.delete(name);
+    });
     
     // Create response with cleared cookies
     const response = NextResponse.json({ 
       success: true, 
-      message: "Logged out successfully" 
+      message: logoutAll ? "Logged out from all devices" : "Logged out successfully" 
     });
     
     // Also clear cookies in the response
-    response.cookies.delete('next-auth.session-token');
-    response.cookies.delete('next-auth.callback-url');
-    response.cookies.delete('next-auth.csrf-token');
-    response.cookies.delete('__Secure-next-auth.session-token');
-    response.cookies.delete('__Host-next-auth.csrf-token');
+    cookieNames.forEach(name => {
+      response.cookies.delete(name);
+    });
     
     return response;
   } catch (error) {
@@ -67,5 +81,19 @@ export async function POST(request: NextRequest) {
       { error: "An error occurred during logout" },
       { status: 500 }
     );
+  } finally {
+    const cookieStore = await cookies();
+    const cookieNames = [
+      "next-auth.session-token",
+      "next-auth.callback-url",
+      "next-auth.csrf-token",
+      "__Secure-next-auth.session-token",
+      "__Host-next-auth.csrf-token",
+      "authly-sid"
+    ];
+    
+    cookieNames.forEach(name => {
+      cookieStore.delete(name);
+    });
   }
 }

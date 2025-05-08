@@ -95,11 +95,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: cloud_pass
       MONGO_INITDB_DATABASE: cloudlink_db
     ports:
-      - "27019:27017" 
-    command: ["mongod", "--auth", "false"]
+      - "27019:27017"
     volumes:
       - cloudlink-db-data:/data/db
-      - ./account/public:/app/public 
     networks:
       - app-network
 

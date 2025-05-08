@@ -44,11 +44,13 @@ export class GoogleDriveService {
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
     ];
+    const state = encodeURIComponent(JSON.stringify({ purpose: 'connectDrive', userId: 'abc123' }));
 
     return client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
       scope: SCOPES,
+      state,
     });
   }
 

@@ -24,15 +24,14 @@ export default function LogoutPage() {
           console.error('Logout failed:', await response.json());
         }
         
-        // Clear Redux state
-        dispatch(logout());
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+         dispatch(logout());
         
         // Redirect to login page
         const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_URL || '/auth';
         window.location.href = `${authServiceUrl}/login`;
-      } catch (error) {
-        console.error('Logout error:', error);
-        window.location.href = '/auth/login';
       }
     };
     

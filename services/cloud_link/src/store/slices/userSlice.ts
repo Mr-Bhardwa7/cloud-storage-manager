@@ -4,21 +4,28 @@ interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: string;
+  position: string;
 }
 
 interface Company {
   id: string;
   name: string;
   description?: string;
+  mobile: string;
+  email: string;
   website?: string;
+  country?: string;
+  size?: string;
+  logo?: string | null;
   teamMembers: TeamMember[];
 }
 
 interface Individual {
   id: string;
-  mobile?: string;
+  mobile: string;
   role?: string;
+  country?: string;
+  avatar?: string | null;
 }
 
 interface Onboarding {
@@ -35,6 +42,7 @@ interface User {
   image: string | null;
   isNew: boolean;
   onboarding: Onboarding | null;
+  lastActive: string;
 }
 
 interface Session {
@@ -118,6 +126,7 @@ export const userSlice = createSlice({
         state.user = action.payload.user;
         state.session = action.payload.session;
         state.isAuthenticated = true;
+        console.log('fetchUserSession response', action.payload, state);
       })
       .addCase(fetchUserSession.rejected, (state, action) => {
         state.isLoading = false;
